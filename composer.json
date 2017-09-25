@@ -1,0 +1,33 @@
+{
+  "name": "jshannon63/container",
+  "type": "library",
+  "description": "DI/IoC/Reflection Container Training",
+  "keywords": [
+    "psr",
+    "psr-11",
+    "container",
+    "ioc",
+    "di"
+  ],
+  "homepage": "https://github.com/jshannon63/container",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jim Shannon",
+      "homepage": "http://jimshannon.me/"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.0",
+    "psr/container": "^1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~6.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Jshannon63\\Container\\": "src/"
+    }
+  },
+  "minimum-stability": "dev"
+}
