@@ -68,7 +68,7 @@ $foo = $app->make('FooInterface);
 **$instance = instance($abstract, $instance)**
 ```php
 
-$instance = instance('Foo', new Foo);
+$instance = $app->instance('Foo', new Foo);
 
 ```  
 
@@ -76,7 +76,7 @@ $instance = instance('Foo', new Foo);
 **$bool = has($abstract)**
 ```php
 
-$bool = has('Foo');
+$bool = $app->has('Foo');
 
 ```  
 
@@ -84,7 +84,7 @@ $bool = has('Foo');
 **$array = getBindings()**
 ```php
 
-$array = getBindings();
+$array = $app->getBindings();
 
 ```  
 
