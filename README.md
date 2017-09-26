@@ -3,7 +3,10 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Dependency Injection Container with Recursive Reflection 
+# Autowired Dependency Injection Container with Recursive Reflection 
+  
+  __Realized with only 300 lines of PHP code__
+
 
 This container class was created during the preparation of a blog article to help users understand the 
 Laravel Service Container. The Container::class used in this exercise implements a PSR-11 container interface 
@@ -11,11 +14,12 @@ and provides some of the basic features found in the Laravel 5 Service Container
 nearly as sophisticated as Taylor Otwell's Illuminate container, however the simplistic code lends itself well to a 
 screencast presentation on understanding his work.
 
-This container has the following features:  
+This container has the following features in only 300 lines of code:  
 
 1. Single class container implementing the PSR-11 Interface
 2. Support for ArrayAccess methods on the container bindings.
 3. Dependency injection through a bind method Closure.
+4. Autowired Inversion of Control (IoC).
 5. Recursive dependency resolution of typehinted classes using Reflection.
 6. Support for shared instances (singletons).
 7. Abstract name support allows resolving of a specified concrete 
@@ -45,12 +49,16 @@ $app = new Container;
 Binding does not intantiate the class. The bind method accepts 3 parameters... 
 the abstract name, the concrete implementation and a true or false for defining as a singleton.
 
-**bind($abstract,$concrete,$singleton)**
+**bind($abstract, $concrete=null, $singleton=false)**
 
 ```php
 $app->bind('FooInterface', 'Foo');
 // or
 $app['FooInterface'] = new Foo;
+// or
+$app->bind('Foo', function(){
+    return new Foo;
+};
 
 ```
 #### Resolving out of the container
