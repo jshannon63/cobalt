@@ -5,7 +5,7 @@
 
 # Autowired Dependency Injection Container with Recursive Reflection 
   
-  __Realized with less than 140 lines of PHP code__
+  __Realized in less than 140 lines of PHP code__
   
   __Well documented source code perfect for learning/building__
 
@@ -21,33 +21,32 @@ This container has the following features in under 140 lines of code:
 1. Single class container implementing the PSR-11 Interface
 2. Support for ArrayAccess methods on the container bindings.
 3. Dependency injection through a bind method Closure.
-4. Autowired Inversion of Control (IoC).
-5. Recursive dependency resolution of typehinted classes using Reflection.
+4. Autowired Inversion of Control (IoC) through recursive 
+dependency resolution of typehinted classes using Reflection.
 6. Support for shared instances (singletons).
-7. Abstract name support allows resolving of a specified concrete 
+7. Abstract class support allows resolving of a specified concrete 
 implementation while programing to a bound interface name.
 8. Ability to bind existing instances into the container.
-9. A self-binding global container instance.
+9. Provides a self-binding global container instance.
 
 This package also contains a number of tests to show/confirm operation using the class.
 
 ## Installation
-
-composer require jshannon63\container  
-
+```
+composer require jshannon63/container  
+```
 (NOTE: This package is not meant to be loaded into an existing framework)  
 
 ## Usage
 
 
-#### Creating the container
+### Creating the container
 ```php
-
 $app = new Container;
 
 ```
 
-#### Binding into the container
+### Binding into the container
 Binding does not intantiate the class. The bind method accepts 3 parameters... 
 the abstract name, the concrete implementation and a true or false for defining as a singleton.
 
@@ -63,7 +62,7 @@ $app->bind('Foo', function(){
 };
 
 ```
-#### Resolving out of the container
+### Resolving out of the container
 **$instance = resolve($abstract);**  (resolve checks for existing binding before instantiating)  
 **$instance = make($abstract);**  (make will bind class as singleton if not already bound)
 ```php
@@ -74,7 +73,7 @@ $foo = $app['FooInterface'];
 $foo = $app->make('FooInterface);
 ```
 
-#### Binding an existing instance
+### Binding an existing instance
 **$instance = instance($abstract, $instance)**
 ```php
 
@@ -82,7 +81,7 @@ $instance = $app->instance('Foo', new Foo);
 
 ```  
 
-#### Checking if a binding exists
+### Checking if a binding exists
 **$bool = has($abstract)**
 ```php
 
@@ -90,7 +89,7 @@ $bool = $app->has('Foo');
 
 ```  
 
-#### Getting a list of bindings
+### Getting a list of bindings
 **$array = getBindings()**
 ```php
 
