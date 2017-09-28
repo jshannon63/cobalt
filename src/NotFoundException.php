@@ -1,9 +1,9 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: jim
- * Date: 9/27/17
- * Time: 9:52 PM
+ *
+ * Author: Jim Shannon (@jshannon63)
+ * Date: 9/19/17
+ * License: MIT
  */
 
 namespace Jshannon63\Container;
@@ -13,5 +13,4 @@ use Psr\Container\NotFoundExceptionInterface;
 
 class NotFoundException extends Exception implements NotFoundExceptionInterface
 {
-
 }
