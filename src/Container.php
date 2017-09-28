@@ -23,10 +23,8 @@ use Exception;
 use ArrayAccess;
 use ReflectionClass;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
-use Psr\Container\ContainerExceptionInterface;
 
-class Container implements ArrayAccess, ContainerInterface, ContainerExceptionInterface, NotFoundExceptionInterface
+class Container implements ArrayAccess, ContainerInterface
 {
     protected static $container;
     protected $bindings = [];
@@ -53,6 +51,7 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
      * @param string $abstract
      * @param mixed $concrete
      * @param bool $singleton
+     * @throws ContainerException
      */
     public function bind($abstract, $concrete = null, $singleton = false)
     {
@@ -64,7 +63,7 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
             try {
                 $concrete = (new ReflectionClass($concrete))->getName();
             } catch (Exception $e) {
-                throw $this->ContainerException('Class '.$concrete.' does not exist');
+                throw new ContainerException('Class '.$concrete.' does not exist');
             }
         }
 
@@ -79,11 +78,12 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
      *
      * @param string $id
      * @return mixed
+     * @throws NotFoundException
      */
     public function resolve($id)
     {
         if (! $this->has($id)) {
-            throw $this->NotFoundException($id);
+            throw new NotFoundException('Binding '.$id.' not found.');
         }
 
         return $this->make($id);
@@ -97,6 +97,7 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
      *
      * @param string $id
      * @return object
+     * @throws ContainerException
      */
     public function make($id)
     {
@@ -121,7 +122,7 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
         $class = new ReflectionClass($this->bindings[$id]['concrete']);
 
         if (! $class->isInstantiable()) {
-            throw $this->ContainerException($this->bindings[$id]['concrete'].' can not be instantiated.');
+            throw new ContainerException($this->bindings[$id]['concrete'].' can not be instantiated.');
         }
 
         $constructor = $class->getConstructor();
@@ -142,7 +143,7 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                 } else {
-                    throw $this->ContainerException('Non class dependency ('.$parameter->name.') requires default value.');
+                    throw new ContainerException('Non class dependency ('.$parameter->name.') requires default value.');
                 }
             } else {
                 if (! $this->has($dependency->name)) {
@@ -205,22 +206,24 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
      *
      * @param string $id
      * @return array
+     * @throws ContainerException
+     * @throws NotFoundException
      */
     public function get($id)
     {
         if ($this->has($id)) {
             if (! $this->bindings[$id]) {
-                throw $this->ContainerException('Error retrieving '.$id.' from container bindings.');
+                throw new ContainerException('Error retrieving '.$id.' from container bindings.');
             }
         } else {
-            $this->NotFoundException($id);
+            throw new NotFoundException('Binding '.$id.' not found.');
         }
 
         return $this->bindings[$id];
     }
 
     /**
-     * Tnterface method for ContainerInterface.
+     * Interface method for ContainerInterface.
      * Check if binding with $id exists.
      *
      * @param string $id
@@ -229,36 +232,6 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
     public function has($id)
     {
         return array_key_exists($id, $this->bindings);
-    }
-
-    /********************************************
-     * NotFoundExceptionInterface Method
-     ********************************************/
-
-    /**
-     * Exception handler for bindings which cannot be found.
-     *
-     * @param string $id
-     * @throws Exception
-     */
-    protected function NotFoundException($id)
-    {
-        throw new Exception('Binding Not Found Exception: '.$id.' is not bound to this container.');
-    }
-
-    /********************************************
-     * ContainerExceptionInterface Method
-     ********************************************/
-
-    /**
-     * General binding exception handler for class.
-     *
-     * @param string $message
-     * @throws Exception
-     */
-    protected function ContainerException($message)
-    {
-        throw new Exception('Binding Exception: '.$message);
     }
 
     /********************************************
@@ -283,11 +256,12 @@ class Container implements ArrayAccess, ContainerInterface, ContainerExceptionIn
      *
      * @param string $offset
      * @return object
+     * @throws NotFoundException
      */
     public function offsetGet($offset)
     {
         if (! $this->has($offset)) {
-            throw $this->NotFoundException($offset);
+            throw new NotFoundException('Binding '.$offset.' not found.');
         }
 
         return $this->resolve($offset);
