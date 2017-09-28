@@ -4,7 +4,6 @@ namespace Tests;
 
 use PHPUnit\Framework\TestCase;
 use Jshannon63\Container\Container;
-use SebastianBergmann\CodeCoverage\Report\Xml\Tests;
 
 // test interface for Foo
 interface FooInterface
@@ -86,7 +85,7 @@ class containerTest extends TestCase
     public function testContainerInitialization()
     {
         // new up container as app
-        $app = new Container();
+        $app = new Container;
 
         // check for self binding using array access functionality
         $this->assertTrue($app['Container'] instanceof Container);

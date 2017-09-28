@@ -1,8 +1,9 @@
 <?php
 /**
- * Service Container Class for Training Purposes.
- * A PSR-11 derived IoC container that provides dependency injection (DI) and full recursive
- * reflection of class dependencies. It also supports container binding access by ArrayAccess.
+ * Service Container Class.
+ * A PSR-11 derived IoC container that provides dependency injection and full recursive
+ * reflection of class dependencies. Supports dependency injection through a bind()
+ * method closure. It also supports container binding access by ArrayAccess.
  * Allows for auto-binding of dependent classes. Supports binding of existing instances.
  * Provides for use of singleton (shared) instances. Also supports Interface binding with a
  * specified default concrete implementation.
@@ -14,17 +15,13 @@
 
 namespace Jshannon63\Container;
 
-/*
- * PSR-11 Container Interface & Exception Handlers.
- */
-
 use Closure;
 use Exception;
 use ArrayAccess;
 use ReflectionClass;
 use Psr\Container\ContainerInterface;
 
-class Container implements ArrayAccess, ContainerInterface
+class Container implements ContainerInterface, ArrayAccess
 {
     protected static $container;
     protected $bindings = [];
@@ -32,7 +29,6 @@ class Container implements ArrayAccess, ContainerInterface
     /**
      * ServiceContainer constructor. Set global static container. Register first binding of
      * the container instance itself. Allow the service container to resolve itself.
-     * Initialize the Facade engine and give it access to the container.
      */
     public function __construct()
     {
@@ -63,7 +59,7 @@ class Container implements ArrayAccess, ContainerInterface
             try {
                 $concrete = (new ReflectionClass($concrete))->getName();
             } catch (Exception $e) {
-                throw new ContainerException('Class '.$concrete.' does not exist');
+                throw new ContainerException('Class '.$concrete.' can not be identified.');
             }
         }
 
@@ -167,10 +163,17 @@ class Container implements ArrayAccess, ContainerInterface
      * @param string $abstract
      * @param object $instance
      * @return object
+     * @throws ContainerException
      */
     public function instance($abstract, $instance)
     {
-        $this->bind($abstract, (new ReflectionClass($instance))->getName(), true);
+        try {
+            $concrete = (new ReflectionClass($instance))->getName();
+        } catch (Exception $e) {
+            throw new ContainerException('The instance passed with '.$abstract.' can not be used.');
+        }
+
+        $this->bind($abstract, $concrete, true);
 
         return $this->bindings[$abstract]['instance'] = $instance;
     }

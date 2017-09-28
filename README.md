@@ -5,7 +5,7 @@
 
 # Autowired Dependency Injection Container with Recursive Reflection 
   
-  __Realized with only 140 lines of PHP code__
+  __Realized with less than 140 lines of PHP code__
   
   __Well documented source code perfect for learning/building__
 
@@ -16,7 +16,7 @@ and provides some of the basic features found in the Laravel 5 Service Container
 nearly as sophisticated as Taylor Otwell's Illuminate container, however the simplistic code lends itself well to a 
 screencast presentation on understanding his work.
 
-This container has the following features in only 140 lines of code:  
+This container has the following features in under 140 lines of code:  
 
 1. Single class container implementing the PSR-11 Interface
 2. Support for ArrayAccess methods on the container bindings.
