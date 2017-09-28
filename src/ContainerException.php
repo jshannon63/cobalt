@@ -1,9 +1,8 @@
 <?php
 /**
- *
  * Author: Jim Shannon (@jshannon63)
  * Date: 9/19/17
- * License: MIT
+ * License: MIT.
  */
 
 namespace Jshannon63\Container;
@@ -13,4 +12,5 @@ use Psr\Container\ContainerExceptionInterface;
 
 class ContainerException extends Exception implements ContainerExceptionInterface
 {
+
 }
