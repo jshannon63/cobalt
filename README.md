@@ -10,19 +10,20 @@
   __Well documented source code perfect for learning/building__
 
 
-This container class was created during the preparation of a blog article to help users understand the 
-Laravel Service Container. The Container::class used in this exercise implements a PSR-11 container interface 
+This container class was created during the preparation of a blog article to help users understand DI/IoC
+Application Containers. The Container::class used in this exercise implements a PSR-11 container interface 
 and provides some of the basic features found in the Laravel 5 Service Container. This project is not 
-nearly as sophisticated as Taylor Otwell's Illuminate container, however the simplistic code lends itself well to a 
-screencast presentation on understanding his work.
+nearly as sophisticated as Taylor Otwell's Illuminate container, however the simplistic code lends itself well to 
+training and use within projects outside of well known frameworks.
 
-This container has the following features in under 140 lines of code:  
+This container has the following features:  
 
 1. Single class container implementing the PSR-11 Interface
 2. Support for ArrayAccess methods on the container bindings.
 3. Dependency injection through a bind method Closure.
-4. Autowired Inversion of Control (IoC) through recursive 
+4. Autowired dependency injection through recursive 
 dependency resolution of typehinted classes using Reflection.
+5. Supports top down Inversion of control.
 6. Support for shared instances (singletons).
 7. Abstract class support allows resolving of a specified concrete 
 implementation while programing to a bound interface name.
