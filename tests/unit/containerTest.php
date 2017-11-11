@@ -161,7 +161,7 @@ class containerTest extends TestCase
 
         $app['YogiBear'] = new Baz();
 
-        $this->assertInstanceOf('Tests\Baz',$app['YogiBear']);
+        $this->assertInstanceOf('Tests\Baz', $app['YogiBear']);
 
         $this->assertInstanceOf('Tests\Baz', $app->get('YogiBear'));
 
