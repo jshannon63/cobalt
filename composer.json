@@ -1,7 +1,7 @@
 {
   "name": "jshannon63/container",
   "type": "library",
-  "description": "Autowired Dependency Injection Container with Recursive Reflection",
+  "description": "Autowired Dependency Injection Container with Reflection Based IoC",
   "keywords": [
     "dependency-injection-container",
     "ico-container",

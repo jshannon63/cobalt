@@ -154,17 +154,16 @@ class containerTest extends TestCase
         $this->assertContains('Dependency Injection Rocks!', $foo->bar()->baz()->sayWords());
     }
 
-    // store a new binding through ArrayAccess method and retrieve it,
+    // store a new binding through ArrayAccess method and retrieve it with ge
     public function testArrayAccessBinding()
     {
         $app = new Container;
 
         $app['YogiBear'] = new Baz();
 
-        $this->assertContains('Tests\Baz', $app->get('YogiBear')['concrete']);
+        $this->assertInstanceOf('Tests\Baz',$app['YogiBear']);
 
-        $yogi = $app['YogiBear'];
-        $this->assertContains('default words', $yogi->sayWords());
+        $this->assertInstanceOf('Tests\Baz', $app->get('YogiBear'));
 
         $this->assertContains('Tests\Baz', $app->getBindings()['YogiBear']['concrete']);
     }

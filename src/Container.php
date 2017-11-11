@@ -208,21 +208,11 @@ class Container implements ContainerInterface, ArrayAccess
      * Get the binding with the given $id.
      *
      * @param string $id
-     * @return array
-     * @throws ContainerException
-     * @throws NotFoundException
+     * @return object
      */
     public function get($id)
     {
-        if ($this->has($id)) {
-            if (! $this->bindings[$id]) {
-                throw new ContainerException('Error retrieving '.$id.' from container bindings.');
-            }
-        } else {
-            throw new NotFoundException('Binding '.$id.' not found.');
-        }
-
-        return $this->bindings[$id];
+        return $this->resolve($id);
     }
 
     /**

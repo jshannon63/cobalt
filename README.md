@@ -3,77 +3,85 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Autowired Dependency Injection Container with Recursive Reflection 
+# Autowired Dependency Injection Container with Reflection Based IoC
   
   __Realized in less than 140 lines of PHP code__
   
-  __Well documented source code perfect for learning/building__
+  __Well documented source perfect for learning/building__
 
 
-This container class was created during the preparation of a blog article to help users understand DI/IoC
-Application Containers. The Container::class used in this exercise implements a PSR-11 container interface 
-and provides some of the basic features found in the Laravel 5 Service Container. This project is not 
-nearly as sophisticated as Taylor Otwell's Illuminate container, however the simplistic code lends itself well to 
-training and use within projects outside of well known frameworks.
+This DI container class was created during the preparation of a blog article on understanding DI/IoC
+Application Containers. This Container::class implements a PSR-11 container interface 
+and provides many of the features found in more notable container projects. This container and its 
+simplistic code lends itself well to training and use within projects.
 
 This container has the following features:  
 
 1. Single class container implementing the PSR-11 Interface
-2. Support for ArrayAccess methods on the container bindings.
-3. Dependency injection through a bind method Closure.
-4. Autowired dependency injection through recursive 
-dependency resolution of typehinted classes using Reflection.
-5. Supports top down Inversion of control.
-6. Support for shared instances (singletons).
-7. Abstract class support allows resolving of a specified concrete 
+2. Support for ArrayAccess methods on container bindings.
+3. Automatic constructor injection of dependencies.
+4. Dependency injection through a bind method Closure.
+5. Autowired dependency resolution using Reflection.
+6. Supports for full top down inversion of control (IoC).
+7. Shared instances (singletons).
+8. Abstract class support allows resolving of a specified concrete 
 implementation while programing to a bound interface name.
-8. Ability to bind existing instances into the container.
-9. Provides a self-binding global container instance.
+9. Ability to bind existing instances into the container.
+10. A self-binding global container instance.
 
-This package also contains a number of tests to show/confirm operation using the class.
+This package also contains a number of tests to show/confirm operation.
 
 ## Installation
 ```
 composer require jshannon63/container  
 ```
-(NOTE: This package is not meant to be loaded into an existing framework)  
 
 ## Usage
 
 
 ### Creating the container
 ```php
-$app = new Container;
+
+$app = new Jshannon63\Container\Container;
 
 ```
 
 ### Binding into the container
-Binding does not intantiate the class. The bind method accepts 3 parameters... 
-the abstract name, the concrete implementation and a true or false for defining as a singleton.
+Binding does not intantiate the class. Instantiation is deferred until requested from the container.
+The bind method accepts 3 parameters... the abstract name, the concrete implementation name and a 
+true or false for defining as a singleton. Notice in all three versions we use different abstract 
+names. This is to show that the abstract name is free-form and is used as the "key" for array storage 
+of bindings.
 
 **bind($abstract, $concrete=null, $singleton=false)**
 
 ```php
-$app->bind('FooInterface', 'Foo');
+
+$app->bind('Foo::class', 'Foo');
 // or
-$app['FooInterface'] = new Foo;
-// or
-$app->bind('Foo', function(){
+$app->bind('FooInterface', function(){
     return new Foo;
 };
+// or
+$app['Foo'] = new Foo;
 
 ```
 ### Resolving out of the container
 **$instance = resolve($abstract);**  (resolve checks for existing binding before instantiating)  
-**$instance = make($abstract);**  (make will bind class as singleton if not already bound)
+**$instance = make($abstract);**  (make will bind and instantiate the class if not already)
 ```php
 $foo = $app->resolve('myfoo');
 // or
+$foo = $app->make('FooInterface');
+// or
 $foo = $app['FooInterface']; 
 // or
-$foo = $app->make('FooInterface);
-```
+$foo = $app->get('Foo');
+// or if using make and Foo is not yet bound to the container you must supply a valid class name
+$foo = $app->make('Foo::class');
 
+```
+Note: resolve() and get() will throw an exception if the requested binding does not exist.
 ### Binding an existing instance
 **$instance = instance($abstract, $instance)**
 ```php
@@ -91,7 +99,7 @@ $bool = $app->has('Foo');
 ```  
 
 ### Getting a list of bindings
-**$array = getBindings()**
+**$array = getBindings()**  // returns an array of the abstract name string keys
 ```php
 
 $array = $app->getBindings();
