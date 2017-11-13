@@ -77,6 +77,12 @@ class Baz
 // test class Fiz
 class Fiz
 {
+    public $app;
+
+    public function __construct(Container $app)
+    {
+        $this->app = $app;
+    }
 }
 
 class containerTest extends TestCase
@@ -161,10 +167,22 @@ class containerTest extends TestCase
 
         $app['YogiBear'] = new Baz();
 
-        $this->assertInstanceOf('Tests\Baz',$app['YogiBear']);
+        $this->assertInstanceOf('Tests\Baz', $app['YogiBear']);
 
         $this->assertInstanceOf('Tests\Baz', $app->get('YogiBear'));
 
         $this->assertContains('Tests\Baz', $app->getBindings()['YogiBear']['concrete']);
+    }
+
+    // verify if we register our newly created $app back into the container,
+    // it must reference the original container instance. in this case Fiz
+    // has a dependency of Container which needs injection.
+    public function testAppBindingRemainsOriginal()
+    {
+        $app = new Container;
+
+        $app->bind('Fiz', Fiz::class);
+
+        $this->assertTrue(($app->getContainer() === $app['Fiz']->app));
     }
 }
