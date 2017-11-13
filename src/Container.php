@@ -34,7 +34,7 @@ class Container implements ContainerInterface, ArrayAccess
     {
         static::$container = $this;
         $this->instance('Container', $this);
-        $this->instance(Container::class, $this);
+        $this->instance(self::class, $this);
     }
 
     /**
@@ -102,7 +102,7 @@ class Container implements ContainerInterface, ArrayAccess
         if (! $this->has($id)) {
             $this->bind($id);
         }
-        
+
         if (array_key_exists('instance', $this->bindings[$id])) {
             return $this->bindings[$id]['instance'];
         }
@@ -111,6 +111,7 @@ class Container implements ContainerInterface, ArrayAccess
             if ($this->bindings[$id]['singleton']) {
                 return $this->bindings[$id]['instance'] = $this->bindings[$id]['concrete']();
             }
+
             return $this->bindings[$id]['concrete']();
         }
 
@@ -126,6 +127,7 @@ class Container implements ContainerInterface, ArrayAccess
             if ($this->bindings[$id]['singleton']) {
                 return $this->bindings[$id]['instance'] = new $this->bindings[$id]['concrete'];
             }
+
             return new $this->bindings[$id]['concrete'];
         }
 
