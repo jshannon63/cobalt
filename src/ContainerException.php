@@ -5,7 +5,7 @@
  * License: MIT.
  */
 
-namespace Jshannon63\Container;
+namespace Jshannon63\Cobalt;
 
 use Exception;
 use Psr\Container\ContainerExceptionInterface;

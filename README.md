@@ -37,7 +37,7 @@ This package also contains a number of tests to show/confirm operation.
 
 ## Installation
 ```
-composer require jshannon63/container  
+composer require jshannon63/cobalt  
 ```
 
 ## Usage
@@ -45,7 +45,7 @@ composer require jshannon63/container
 
 ### Creating the container
 ```php
-use Jshannon63\Container;
+use Jshannon63\Cobalt;
  
 // create a default container 
   

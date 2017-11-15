@@ -34,7 +34,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Jshannon63\\Container\\": "src/"
+      "Jshannon63\\Cobalt\\": "src/"
     }
   },
   "minimum-stability": "dev"

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * service container class.
+ * Cobalt Service Container.
  *
  * a PSR-11 derived IoC container that provides dependency injection and reflection
  * based inversion of control. supports dependency injection through a bind()
@@ -18,7 +18,7 @@ declare(strict_types=1);
  * License: MIT
  */
 
-namespace Jshannon63\Container;
+namespace Jshannon63\Cobalt;
 
 use Closure;
 use Exception;

@@ -3,7 +3,7 @@
 namespace Tests;
 
 use PHPUnit\Framework\TestCase;
-use Jshannon63\Container\Container;
+use Jshannon63\Cobalt\Container;
 
 // test interface for Foo
 interface FooInterface
