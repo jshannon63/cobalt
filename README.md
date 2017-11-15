@@ -3,31 +3,35 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Autowired Dependency Injection Container with Reflection Based IoC
+# Autowired Dependency Injection Container for PHP with Reflection Based IoC
   
-  __Realized in fewer than 140 lines of PHP code.__
+  __Realized in fewer than 160 lines of code.__
   
-  __Well documented, perfect for learning/building.__
+  __Well documented, perfect for building/learning.__
 
 
-This DI container class was created while preparing a blog article on DI/IoC
-Application Containers. This Container::class implements a PSR-11 Interop Container interface 
-and provides many of the features found in more notable container projects. This container and its 
-simplistic code lends itself well to training and use within projects.
+This DI container class was created to push the performance limits on what a dynamic autowired DI/IoC 
+application container can achive. This Container::class implements the PSR-11 ContainerInterface 
+and provides many of the features found in more notable container projects. Additionally, 
+dependency caching capabilities make this container a great choice for performance 
+intensive applications. This container and its simplistic code lends itself 
+well to training and use within projects.
 
 This container has the following features:  
 
-1. Single class container implementing PSR-11 (Container Interop) standard interface.
+1. Single class container implementing the PSR-11 ContainerInterface.
 2. Support for ArrayAccess methods on container bindings.
 3. Automatic constructor injection of dependencies.
 4. Dependency injection through a bind method Closure.
 5. Autowired dependency resolution using Reflection.
-6. Supports for full top down inversion of control (IoC).
+6. Full top down inversion of control (IoC).
 7. Shared instances (singletons).
-8. Abstract class support allows resolving of a specified concrete 
-implementation while programing to a bound interface name.
-9. Ability to bind existing instances into the container.
+8. Abstract class bound to a concrete implementation simplifies code.
+9. Bind existing instances into the container.
 10. A self-binding global container instance.
+11. Optional dependency caching for blazing fast speed.
+12. Optional shared only (singleton) mode.
+13. Exhaustive source code documentation.
 
 This package also contains a number of tests to show/confirm operation.
 
@@ -42,13 +46,22 @@ composer require jshannon63/container
 ### Creating the container
 ```php
 use Jshannon63\Container;
+ 
+// create a default container 
   
-$app = new Container;
-
+$app = new Container();
+  
+// or, create a singleton only services container
+  
+$app = new Container('shared');
+    
+// or, enable dependency caching for improved performance
+  
+$app = new Container('cached');
 ```
 
 ### Binding into the container
-Binding does not intantiate the class. Instantiation is deferred until requested from the container.
+Binding does not instantiate the class. Instantiation is deferred until requested from the container.
 The bind method accepts 3 parameters... the abstract name, the concrete implementation name and a 
 true or false for defining as a singleton. Notice in all three versions we use different abstract 
 names. This is to show that the abstract name is free-form and is used as the "key" for array storage 
@@ -57,18 +70,25 @@ of bindings.
 **bind($abstract, $concrete=null, $singleton=false)**
 
 ```php
-$app->bind('Foo::class', 'Foo');
+// a simple binding using only the class name
   
-// or
+$app->bind('Foo::class');
+  
+// or, bind an interface with a desired concrete implementation.
+// can be switched out easily on one place in your code.
+  
+$app->bind('FooInterface', 'Foo');
+  
+// or, bind an interface or other label to a closure to
+// directly control dependency injection.
   
 $app->bind('FooInterface', function(){
-    return new Foo;
+    return new Foo('123-456-7890');
 };
   
-// or
+// or, use array access to bind a new instance directly.
   
 $app['Foo'] = new Foo;
-
 ```
 ### Resolving out of the container
 **$instance = resolve($abstract);**  (resolve checks for existing binding before instantiating)  
