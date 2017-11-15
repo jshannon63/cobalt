@@ -46,7 +46,6 @@ class Container implements ContainerInterface, ArrayAccess
         static::$container = $this;
         $this->instance('Container', $this);
         $this->instance(self::class, $this);
-
     }
 
     /**
@@ -221,7 +220,7 @@ class Container implements ContainerInterface, ArrayAccess
             // dependency so if the dependency is rebound later, it can force
             // the upstream bindings to refresh their dependency cache.
             else {
-                $dependencies[] = $this->make($dependency->name);// recursive call
+                $dependencies[] = $this->make($dependency->name); // recursive call
                 $this->bindings[$dependency->name]['depender'][] = $id;
             }
         }
