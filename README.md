@@ -3,19 +3,19 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Autowired Dependency Injection Container for PHP with Reflection Based IoC
+# Cobalt - An Autowired Dependency Injection Container for PHP with Reflection Based IoC
   
   __Realized in fewer than 160 lines of code.__
   
   __Well documented, perfect for building/learning.__
 
 
-This DI container class was created to push the performance limits on what a dynamic autowired DI/IoC 
-application container can achive. This Container::class implements the PSR-11 ContainerInterface 
-and provides many of the features found in more notable container projects. Additionally, 
-dependency caching capabilities make this container a great choice for performance 
-intensive applications. This container and its simplistic code lends itself 
-well to training and use within projects.
+Cobalt was created to push the performance limits on what a dynamic autowired DI/IoC application  
+container can achive. The Container::class implements the PSR-11 ContainerInterface and  
+provides many of the features found in more notable container projects. Additionally, 
+dependency caching capabilities make the Cobalt container a great choice for   
+performance intensive applications. Cobalt and its simplistic code is
+perfect for learning, use within projects or frameworks.
 
 This container has the following features:  
 

@@ -1,5 +1,5 @@
 {
-  "name": "jshannon63/container",
+  "name": "jshannon63/cobalt",
   "type": "library",
   "description": "Autowired Dependency Injection Container for PHP with Reflection Based IoC",
   "keywords": [
