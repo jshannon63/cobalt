@@ -45,7 +45,7 @@ composer require jshannon63/cobalt
 
 ### Creating the container
 ```php
-use Jshannon63\Cobalt;
+use Jshannon63\Cobalt\Container;
  
 // create a default container 
   
