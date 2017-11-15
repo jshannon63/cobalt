@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /**
  * service container class.
  *
@@ -272,7 +274,7 @@ class Container implements ContainerInterface, ArrayAccess
      *
      * @return Container
      */
-    public static function getContainer(): Container
+    public static function getContainer(): self
     {
         return static::$container;
     }
