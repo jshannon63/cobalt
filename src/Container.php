@@ -37,7 +37,6 @@ class Container implements ContainerInterface, ArrayAccess
         static::$container = $this;
         $this->instance('Container', $this);
         $this->instance(self::class, $this);
-
     }
 
     /**
@@ -155,6 +154,7 @@ class Container implements ContainerInterface, ArrayAccess
         if ($this->bindings[$id]['concrete'] instanceof Closure) {
             if ($this->bindings[$id]['singleton']) {
                 $this->bindings[$id]['instance'] = $this->bindings[$id]['concrete']();
+
                 return $this->bindings[$id]['instance'];
             }
 
@@ -179,6 +179,7 @@ class Container implements ContainerInterface, ArrayAccess
         if (! $constructor) {
             if ($this->bindings[$id]['singleton']) {
                 $this->bindings[$id]['instance'] = new $this->bindings[$id]['concrete'];
+
                 return $this->bindings[$id]['instance'];
             }
 
@@ -210,7 +211,7 @@ class Container implements ContainerInterface, ArrayAccess
             // class name to the dependency so if the dependency becomes dirty later,
             // it can call the upstream bindings to refresh its' dependency cache.
             else {
-                $dependencies[] = $this->make($dependency->name);// recursive call
+                $dependencies[] = $this->make($dependency->name); // recursive call
                 $this->bindings[$dependency->name]['depender'][] = $id;
             }
         }
@@ -220,6 +221,7 @@ class Container implements ContainerInterface, ArrayAccess
         // let's store the instance and return it.
         if ($this->bindings[$id]['singleton']) {
             $this->bindings[$id]['instance'] = $class->newInstanceArgs($dependencies);
+
             return $this->bindings[$id]['instance'];
         }
 
