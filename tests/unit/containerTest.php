@@ -2,18 +2,21 @@
 
 namespace Tests;
 
-use Jshannon63\Cobalt\NotFoundException;
-use Jshannon63\Cobalt\ContainerException;
 use PHPUnit\Framework\TestCase;
 use Jshannon63\Cobalt\Container;
+use Jshannon63\Cobalt\NotFoundException;
+use Jshannon63\Cobalt\ContainerException;
 
 // test interface for Foo
 interface FooInterface
 {
 }
 
-class FooNotInstantiable implements FooInterface{
-    private function __construct() { }
+class FooNotInstantiable implements FooInterface
+{
+    private function __construct()
+    {
+    }
 }
 
 // test class Foo
@@ -91,7 +94,9 @@ class Fiz
     }
 }
 
-class Yaz{}
+class Yaz
+{
+}
 
 class Zaz
 {
@@ -117,7 +122,6 @@ class containerTest extends TestCase
         // check Container instance is bound as singleton
         $app2 = $app->make(Container::class);
         $this->assertTrue($app === $app2);
-
     }
 
     // make sure a singleton binding returns the same instance each time.
@@ -186,15 +190,14 @@ class containerTest extends TestCase
 
         $app->bind('Foo', function () {
             return new Foo(new Bar(new Baz('Dependency Injection Rocks!')));
-        },true);
+        }, true);
 
         $foo = $app->resolve('Foo');
         $foo2 = $app->resolve('Foo');
 
-
         $this->assertContains('Dependency Injection Rocks!', $foo->bar()->baz()->sayWords());
 
-        $this->assertSame($foo,$foo2);
+        $this->assertSame($foo, $foo2);
     }
 
     // store a new binding through ArrayAccess method and retrieve it with ge
@@ -229,9 +232,9 @@ class containerTest extends TestCase
 
         $app = new Container();
 
-        $app->bind('Foo',Foo::class,false);
+        $app->bind('Foo', Foo::class, false);
         $instance1 = $app->make('Foo');
-        for($i=0;$i<50000;$i++){
+        for ($i = 0; $i < 50000; $i++) {
             $instance2 = $app->make('Foo');
         }
         $this->assertFalse($instance1 === $instance2);
@@ -240,9 +243,9 @@ class containerTest extends TestCase
 
         $app2 = new Container('cached');
 
-        $app2->bind('Foo2',Foo::class,false);
+        $app2->bind('Foo2', Foo::class, false);
         $instance3 = $app2->make('Foo2');
-        for($i=0;$i<50000;$i++){
+        for ($i = 0; $i < 50000; $i++) {
             $instance4 = $app2->make('Foo2');
         }
         $this->assertFalse($instance3 === $instance4);
@@ -250,9 +253,8 @@ class containerTest extends TestCase
         $after = microtime(true);
 
         // cached mode should be at least 5x as fast.
-        echo ($between-$before)/(($after-$between));
-        $this->assertGreaterThan(($after-$between)*5,$between-$before);
-
+        echo($between - $before) / (($after - $between));
+        $this->assertGreaterThan(($after - $between) * 5, $between - $before);
     }
 
     public function testBindingsListing()
@@ -261,8 +263,7 @@ class containerTest extends TestCase
 
         $this->assertTrue($app->has(Container::class));
 
-        $this->assertArrayHasKey(Container::class,$app->getBindings());
-
+        $this->assertArrayHasKey(Container::class, $app->getBindings());
     }
 
     public function testInstanceBinding()
@@ -271,8 +272,7 @@ class containerTest extends TestCase
 
         $fiz = $app->instance('Fiz', new Fiz($app));
 
-        $this->assertInstanceOf(Fiz::class,$fiz);
-
+        $this->assertInstanceOf(Fiz::class, $fiz);
     }
 
     public function testGetMethods()
@@ -282,9 +282,8 @@ class containerTest extends TestCase
         $myapp = $app->get(Container::class);
         $myapp2 = $app->offsetGet(Container::class);
 
-        $this->assertSame($app,$myapp);
-        $this->assertSame($app,$myapp2);
-
+        $this->assertSame($app, $myapp);
+        $this->assertSame($app, $myapp2);
     }
 
     public function testSetterUnsetter()
@@ -300,14 +299,13 @@ class containerTest extends TestCase
         $this->assertFalse($app->has('Fiz'));
 
         $this->assertFalse($app->offsetExists('Fiz'));
-
     }
 
     public function testGetContainer()
     {
         $app = new Container();
 
-        $this->assertSame($app,$app::getContainer());
+        $this->assertSame($app, $app::getContainer());
     }
 
     public function testOffsetGetException()
@@ -334,19 +332,19 @@ class containerTest extends TestCase
 
         $this->expectException(ContainerException::class);
 
-        $app->bind('abc','123');
+        $app->bind('abc', '123');
     }
 
     public function testSharedModeForcesSingleton()
     {
         $app = new Container('shared');
 
-        $app->bind('Foo',Foo::class,false);
+        $app->bind('Foo', Foo::class, false);
 
         $instance1 = $app['Foo'];
         $instance2 = $app['Foo'];
 
-        $this->assertSame($instance1,$instance2);
+        $this->assertSame($instance1, $instance2);
     }
 
     public function testRebindingBustsDependerCache()
@@ -357,7 +355,7 @@ class containerTest extends TestCase
 
         $foo = $app->resolve(Foo::class);
 
-        $this->assertContains(Foo::class,$app->getBinding(Bar::class)['depender']);
+        $this->assertContains(Foo::class, $app->getBinding(Bar::class)['depender']);
         $this->assertTrue($app->getBinding(Foo::class)['cached']);
 
         $app->bind(Bar::class);
@@ -365,18 +363,15 @@ class containerTest extends TestCase
         $bar = $app->resolve(Bar::class);
 
         $this->assertFalse($app->getBinding(Foo::class)['cached']);
-
     }
 
     public function testClassNotInstantiable()
     {
-
         $app = new Container();
 
         $this->expectException(ContainerException::class);
 
         $app->make(FooNotInstantiable::class);
-
     }
 
     public function testNonClassWithoutDefaultValue()
@@ -386,21 +381,20 @@ class containerTest extends TestCase
         $this->expectException(ContainerException::class);
 
         $app->make(Zaz::class);
-
     }
 
     public function testNonConstructorClasses()
     {
         $app = new Container();
 
-        $app->bind('YazFactory',Yaz::class,false);
-        $app->bind('YazSingleton',Yaz::class,true);
+        $app->bind('YazFactory', Yaz::class, false);
+        $app->bind('YazSingleton', Yaz::class, true);
 
         $yaz = $app->make('YazFactory');
-        $yaz1= $app->make('YazSingleton');
-        $yaz2= $app->make('YazSingleton');
+        $yaz1 = $app->make('YazSingleton');
+        $yaz2 = $app->make('YazSingleton');
 
-        $this->assertNotSame($yaz,$yaz1);
-        $this->assertSame($yaz1,$yaz2);
+        $this->assertNotSame($yaz, $yaz1);
+        $this->assertSame($yaz1, $yaz2);
     }
 }
