@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jshannon63/container.svg?branch=master)](https://travis-ci.org/jshannon63/container)
+[![Build Status](https://travis-ci.org/jshannon63/container.svg?branch=master)](https://travis-ci.org/jshannon63/cobalt)
 [![StyleCI](https://styleci.io/repos/104802764/shield?branch=master)](https://styleci.io/repos/104802764)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
@@ -33,7 +33,7 @@ This container has the following features:
 12. Optional shared only (singleton) mode.
 13. Exhaustive source code documentation.
 
-This package also contains a number of tests to show/confirm operation.
+NOTE: Cobalt has 100% PHPUnit test coverage to show/confirm operation.
 
 ## Installation
 ```

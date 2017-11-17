@@ -46,7 +46,6 @@ class Container implements ContainerInterface, ArrayAccess
     {
         $this->mode = $mode;
         static::$container = $this;
-        $this->instance('Container', $this);
         $this->instance(self::class, $this);
     }
 
@@ -67,7 +66,7 @@ class Container implements ContainerInterface, ArrayAccess
     public function bind(string $abstract, $concrete = null, bool $singleton = false): void
     {
         // if this binding is being updated and another class is dependent on
-        // it, then clear its dependency cache of the upstream binding.
+        // it, then clear the dependency cache of the upstream binding.
         if (isset($this->bindings[$abstract]['depender'])) {
             foreach ($this->bindings[$abstract]['depender'] as $depender) {
                 $this->bindings[$depender]['cached'] = false;
@@ -75,10 +74,10 @@ class Container implements ContainerInterface, ArrayAccess
             }
         }
 
-        // clear the current binding if it exists
+        // remove the current binding if it exists
         unset($this->bindings[$abstract]);
 
-        // if value for $concrete was not passed then set to $abstract
+        // if a $concrete class was not passed then set to $abstract
         if (is_null($concrete)) {
             $concrete = $abstract;
         }
@@ -217,12 +216,18 @@ class Container implements ContainerInterface, ArrayAccess
                 }
             }
 
-            // it's a class dependency... we will dive in recursively and make() the
+            // it's a class dependency... if the dependency has not already been resolved
+            // by another class call, then we will dive in recursively and make() the
             // dependency we need. we will also save the calling class name to the
             // dependency so if the dependency is rebound later, it can force
-            // the upstream bindings to refresh their dependency cache.
+            // the upstream bindings to refresh its' dependency cache.
             else {
-                $dependencies[] = $this->make($dependency->name); // recursive call
+                if(!$this->has($dependency->name)){
+                    $dependencies[] = $this->make($dependency->name); // recursive call
+                }
+                else{
+                    $dependencies[] = $this[$dependency->name];
+                }
                 $this->bindings[$dependency->name]['depender'][] = $id;
             }
         }
@@ -250,20 +255,11 @@ class Container implements ContainerInterface, ArrayAccess
      * @param string $abstract
      * @param object $instance
      * @return object
-     * @throws ContainerException
      */
     public function instance(string $abstract, $instance)
     {
-        // extract the full class name and store as key.
-        // Throw exception if invalid.
-        try {
-            $concrete = (new ReflectionClass($instance))->getName();
-        } catch (Exception $e) {
-            throw new ContainerException('The instance passed with '.$abstract.' can not be used.');
-        }
-
         // bind the key and instance to the container and mark as singleton.
-        $this->bind($abstract, $concrete, true);
+        $this->bind($abstract, get_class($instance), true);
 
         // return the instance.
         return $this->bindings[$abstract]['instance'] = $instance;
@@ -280,9 +276,18 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
+     * Return and array containing a the requested binding.
+     * @param string $id
+     * @return array
+     */
+    public function getBinding($id): array
+    {
+        return $this->bindings[$id];
+    }
+
+    /**
      * Return and array containing all the bindings.
      * Sometimes you are just curious.
-     *
      * @return array
      */
     public function getBindings(): array

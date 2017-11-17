@@ -2,12 +2,18 @@
 
 namespace Tests;
 
+use Jshannon63\Cobalt\NotFoundException;
+use Jshannon63\Cobalt\ContainerException;
 use PHPUnit\Framework\TestCase;
 use Jshannon63\Cobalt\Container;
 
 // test interface for Foo
 interface FooInterface
 {
+}
+
+class FooNotInstantiable implements FooInterface{
+    private function __construct() { }
 }
 
 // test class Foo
@@ -85,6 +91,18 @@ class Fiz
     }
 }
 
+class Yaz{}
+
+class Zaz
+{
+    protected $value;
+
+    public function __construct(string $value)
+    {
+        $this->value = $value;
+    }
+}
+
 class containerTest extends TestCase
 {
     // check all aspects of the container creation.
@@ -94,11 +112,12 @@ class containerTest extends TestCase
         $app = new Container;
 
         // check for self binding using array access functionality
-        $this->assertTrue($app['Container'] instanceof Container);
+        $this->assertTrue($app[Container::class] instanceof Container);
 
         // check Container instance is bound as singleton
-        $app2 = $app->make('Container');
+        $app2 = $app->make(Container::class);
         $this->assertTrue($app === $app2);
+
     }
 
     // make sure a singleton binding returns the same instance each time.
@@ -131,7 +150,7 @@ class containerTest extends TestCase
     {
         $app = new Container;
 
-        $app->bind('Foo', 'Tests\Foo');
+        $app->bind('Foo', Foo::class);
 
         $this->assertContains('default words', $app['Foo']->bar()->baz()->sayWords());
     }
@@ -160,6 +179,24 @@ class containerTest extends TestCase
         $this->assertContains('Dependency Injection Rocks!', $foo->bar()->baz()->sayWords());
     }
 
+    // check dependency injection through closure as singleton
+    public function testSingletonClosureInjection()
+    {
+        $app = new Container;
+
+        $app->bind('Foo', function () {
+            return new Foo(new Bar(new Baz('Dependency Injection Rocks!')));
+        },true);
+
+        $foo = $app->resolve('Foo');
+        $foo2 = $app->resolve('Foo');
+
+
+        $this->assertContains('Dependency Injection Rocks!', $foo->bar()->baz()->sayWords());
+
+        $this->assertSame($foo,$foo2);
+    }
+
     // store a new binding through ArrayAccess method and retrieve it with ge
     public function testArrayAccessBinding()
     {
@@ -184,5 +221,186 @@ class containerTest extends TestCase
         $app->bind('Fiz', Fiz::class);
 
         $this->assertTrue(($app->getContainer() === $app['Fiz']->app));
+    }
+
+    public function testCachedBindings()
+    {
+        $before = microtime(true);
+
+        $app = new Container();
+
+        $app->bind('Foo',Foo::class,false);
+        $instance1 = $app->make('Foo');
+        for($i=0;$i<50000;$i++){
+            $instance2 = $app->make('Foo');
+        }
+        $this->assertFalse($instance1 === $instance2);
+
+        $between = microtime(true);
+
+        $app2 = new Container('cached');
+
+        $app2->bind('Foo2',Foo::class,false);
+        $instance3 = $app2->make('Foo2');
+        for($i=0;$i<50000;$i++){
+            $instance4 = $app2->make('Foo2');
+        }
+        $this->assertFalse($instance3 === $instance4);
+
+        $after = microtime(true);
+
+        // cached mode should be at least 5x as fast.
+        echo ($between-$before)/(($after-$between));
+        $this->assertGreaterThan(($after-$between)*5,$between-$before);
+
+    }
+
+    public function testBindingsListing()
+    {
+        $app = new Container();
+
+        $this->assertTrue($app->has(Container::class));
+
+        $this->assertArrayHasKey(Container::class,$app->getBindings());
+
+    }
+
+    public function testInstanceBinding()
+    {
+        $app = new Container();
+
+        $fiz = $app->instance('Fiz', new Fiz($app));
+
+        $this->assertInstanceOf(Fiz::class,$fiz);
+
+    }
+
+    public function testGetMethods()
+    {
+        $app = new Container();
+
+        $myapp = $app->get(Container::class);
+        $myapp2 = $app->offsetGet(Container::class);
+
+        $this->assertSame($app,$myapp);
+        $this->assertSame($app,$myapp2);
+
+    }
+
+    public function testSetterUnsetter()
+    {
+        $app = new Container();
+
+        $app->offsetSet('Fiz', Fiz::class);
+
+        $this->assertInstanceOf(Fiz::class, $app['Fiz']);
+
+        $app->offsetUnset('Fiz');
+
+        $this->assertFalse($app->has('Fiz'));
+
+        $this->assertFalse($app->offsetExists('Fiz'));
+
+    }
+
+    public function testGetContainer()
+    {
+        $app = new Container();
+
+        $this->assertSame($app,$app::getContainer());
+    }
+
+    public function testOffsetGetException()
+    {
+        $app = new Container();
+
+        $this->expectException(NotFoundException::class);
+
+        $app->offsetGet('abc');
+    }
+
+    public function testResolveException()
+    {
+        $app = new Container();
+
+        $this->expectException(NotFoundException::class);
+
+        $app->resolve('abc');
+    }
+
+    public function testBindingException()
+    {
+        $app = new Container();
+
+        $this->expectException(ContainerException::class);
+
+        $app->bind('abc','123');
+    }
+
+    public function testSharedModeForcesSingleton()
+    {
+        $app = new Container('shared');
+
+        $app->bind('Foo',Foo::class,false);
+
+        $instance1 = $app['Foo'];
+        $instance2 = $app['Foo'];
+
+        $this->assertSame($instance1,$instance2);
+    }
+
+    public function testRebindingBustsDependerCache()
+    {
+        $app = new Container('cached');
+
+        $app->bind(Foo::class);
+
+        $foo = $app->resolve(Foo::class);
+
+        $this->assertContains(Foo::class,$app->getBinding(Bar::class)['depender']);
+        $this->assertTrue($app->getBinding(Foo::class)['cached']);
+
+        $app->bind(Bar::class);
+
+        $bar = $app->resolve(Bar::class);
+
+        $this->assertFalse($app->getBinding(Foo::class)['cached']);
+
+    }
+
+    public function testClassNotInstantiable()
+    {
+
+        $app = new Container();
+
+        $this->expectException(ContainerException::class);
+
+        $app->make(FooNotInstantiable::class);
+
+    }
+
+    public function testNonClassWithoutDefaultValue()
+    {
+        $app = new Container();
+
+        $this->expectException(ContainerException::class);
+
+        $app->make(Zaz::class);
+
+    }
+
+    public function testNonConstructorClasses()
+    {
+        $app = new Container();
+
+        $app->bind('YazFactory',Yaz::class,false);
+        $app->bind('YazSingleton',Yaz::class,true);
+
+        $yaz = $app->make('YazFactory');
+        $yaz1= $app->make('YazSingleton');
+        $yaz2= $app->make('YazSingleton');
+
+        $this->assertNotSame($yaz,$yaz1);
+        $this->assertSame($yaz1,$yaz2);
     }
 }
