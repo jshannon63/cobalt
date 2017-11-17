@@ -8,20 +8,24 @@
   __Realized in fewer than 160 lines of code.__
   
   __Well documented, perfect for building/learning.__
+  
+  __Among the fastest PHP autowired containers available__
+  
+  __100% PHPUnit test coverage__
 
 
-Cobalt was created to push the performance limits on what a dynamic autowired DI/IoC application  
-container can achive. The Container::class implements the PSR-11 ContainerInterface and  
+Cobalt was created to push the performance limits on what a PHP dynamic autowired DI/IoC application 
+container can achieve. The Container::class implements the PSR-11 ContainerInterface and 
 provides many of the features found in more notable container projects. Additionally, 
-dependency caching capabilities make the Cobalt container a great choice for   
-performance intensive applications. Cobalt and its simplistic code is
-perfect for learning, use within projects or frameworks.
+dependency caching capabilities make the Cobalt container a great choice for 
+performance intensive applications. Cobalt and its simplistic code are 
+perfect for learning or for use within projects or frameworks.
 
-This container has the following features:  
+The Cobalt service container has the following features:  
 
 1. Single class container implementing the PSR-11 ContainerInterface.
 2. Support for ArrayAccess methods on container bindings.
-3. Automatic constructor injection of dependencies.
+3. Automatic constructor injection of type-hinted dependencies.
 4. Dependency injection through a bind method Closure.
 5. Autowired dependency resolution using Reflection.
 6. Full top down inversion of control (IoC).
@@ -33,7 +37,6 @@ This container has the following features:
 12. Optional shared only (singleton) mode.
 13. Exhaustive source code documentation.
 
-NOTE: Cobalt has 100% PHPUnit test coverage to show/confirm operation.
 
 ## Installation
 ```
@@ -125,6 +128,13 @@ $instance = $app->instance('Foo', new Foo);
 **$bool = has($abstract)**
 ```php
 $bool = $app->has('Foo');
+
+```  
+
+### Get the values of a single binding
+**$array = getBinding($abstract)**  // returns an array of the desired bindings' values
+```php
+$array = $app->getBinding($abstract);
 
 ```  
 
