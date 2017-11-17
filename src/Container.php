@@ -222,10 +222,9 @@ class Container implements ContainerInterface, ArrayAccess
             // dependency so if the dependency is rebound later, it can force
             // the upstream bindings to refresh its' dependency cache.
             else {
-                if(!$this->has($dependency->name)){
+                if (! $this->has($dependency->name)) {
                     $dependencies[] = $this->make($dependency->name); // recursive call
-                }
-                else{
+                } else {
                     $dependencies[] = $this[$dependency->name];
                 }
                 $this->bindings[$dependency->name]['depender'][] = $id;
