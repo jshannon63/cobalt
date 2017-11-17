@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jshannon63/container.svg?branch=master)](https://travis-ci.org/jshannon63/cobalt)
+[![Build Status](https://travis-ci.org/jshannon63/cobalt.svg?branch=master)](https://travis-ci.org/jshannon63/cobalt)
 [![StyleCI](https://styleci.io/repos/104802764/shield?branch=master)](https://styleci.io/repos/104802764)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
