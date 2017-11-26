@@ -398,30 +398,5 @@ class containerTest extends TestCase
         $this->assertSame($yaz1, $yaz2);
     }
 
-    public function testPerformanceBenchmark()
-    {
 
-        $app = new Container();
-
-        // get base time for standard
-        $before = microtime(true);
-        for($i=0;$i<100000;$i++){
-            $a[$i]=$i;
-            unset($a[$i]);
-        }
-        $base = microtime(true)-$before;
-
-        // run test and get the time
-        $before = microtime(true);
-        for($i=0;$i<100000;$i++){
-            $app->bind(Foo::class);
-            $a[$i]=$app->make(Foo::class);
-            unset($a[$i]);
-        }
-        $test = microtime(true)-$before;
-
-
-
-        $this->assertGreaterThan(200,$test/$base);
-    }
 }
