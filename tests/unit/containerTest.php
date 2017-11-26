@@ -253,7 +253,7 @@ class containerTest extends TestCase
         $after = microtime(true);
 
         // cached mode should be at least 5x as fast.
-        echo($between - $before) / (($after - $between));
+        // echo($between - $before) / (($after - $between));
         $this->assertGreaterThan(($after - $between) * 5, $between - $before);
     }
 
@@ -396,5 +396,32 @@ class containerTest extends TestCase
 
         $this->assertNotSame($yaz, $yaz1);
         $this->assertSame($yaz1, $yaz2);
+    }
+
+    public function testPerformanceBenchmark()
+    {
+
+        $app = new Container();
+
+        // get base time for standard
+        $before = microtime(true);
+        for($i=0;$i<100000;$i++){
+            $a[$i]=$i;
+            unset($a[$i]);
+        }
+        $base = microtime(true)-$before;
+
+        // run test and get the time
+        $before = microtime(true);
+        for($i=0;$i<100000;$i++){
+            $app->bind(Foo::class);
+            $a[$i]=$app->make(Foo::class);
+            unset($a[$i]);
+        }
+        $test = microtime(true)-$before;
+
+
+
+        $this->assertGreaterThan(200,$test/$base);
     }
 }

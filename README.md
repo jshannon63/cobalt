@@ -8,11 +8,12 @@
   __Realized in fewer than 160 lines of code.__
   
   __Well documented, perfect for building/learning.__
-  
+   
+  __100% PHPUnit test coverage__ 
+    
   __Among the fastest PHP autowired containers available__
   
-  __100% PHPUnit test coverage__
-
+See [kocsismate/php-di-container-benchmarks](https://github.com/kocsismate/php-di-container-benchmarks) test results [here](https://rawgit.com/kocsismate/php-di-container-benchmarks/master/var/benchmark.html)
 
 Cobalt was created to push the performance limits on what a PHP dynamic autowired DI/IoC application 
 container can achieve. The Container::class implements the PSR-11 ContainerInterface and 
@@ -75,7 +76,7 @@ of bindings.
 ```php
 // a simple binding using only the class name
   
-$app->bind('Foo::class');
+$app->bind(Foo::class);
   
 // or, bind an interface with a desired concrete implementation.
 // can be switched out easily on one place in your code.

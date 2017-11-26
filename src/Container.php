@@ -40,7 +40,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * serviceContainer constructor. Set global static container. Register first binding
      * of the container instance itself. Allow the service container to resolve itself.
-     * also register a number of base bindings representing the container.
+     * also register a base binding representing the container.
      */
     public function __construct($mode = null)
     {
@@ -65,8 +65,8 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bind(string $abstract, $concrete = null, bool $singleton = false): void
     {
-        // if this binding is being updated and another class is dependent on
-        // it, then clear the dependency cache of the upstream binding.
+        // if this binding is being updated and other classes dependent on
+        // it, then clear the dependency caches of the upstream bindings.
         if (isset($this->bindings[$abstract]['depender'])) {
             foreach ($this->bindings[$abstract]['depender'] as $depender) {
                 $this->bindings[$depender]['cached'] = false;
@@ -74,7 +74,7 @@ class Container implements ContainerInterface, ArrayAccess
             }
         }
 
-        // remove the current binding if it exists
+        // start fresh... remove the current binding if it already exists
         unset($this->bindings[$abstract]);
 
         // if a $concrete class was not passed then set to $abstract
@@ -82,7 +82,7 @@ class Container implements ContainerInterface, ArrayAccess
             $concrete = $abstract;
         }
 
-        // if the concrete class is not a closure, then get the reflection
+        // if the concrete class is not a closure, then use reflection on the
         // class, cache it in the binding and set the full concrete name
         if (! $concrete instanceof Closure) {
             try {
@@ -93,7 +93,7 @@ class Container implements ContainerInterface, ArrayAccess
             }
         }
 
-        // if the container was initialized in shared mode, force singletons
+        // if the container was initialized in shared mode, we must force singletons
         if ($this->mode == 'shared') {
             $singleton = true;
         }
@@ -196,7 +196,7 @@ class Container implements ContainerInterface, ArrayAccess
             return new $this->bindings[$id]['concrete'];
         }
 
-        // get all the constructor parameters.
+        // get all the constructors' parameters.
         $parameters = $constructor->getParameters();
 
         // then loop through the parameters to see what is in the constructor.
@@ -243,7 +243,7 @@ class Container implements ContainerInterface, ArrayAccess
         $this->bindings[$id]['cached'] = true;
         $this->bindings[$id]['dependencies'] = $dependencies;
 
-        // return a newly instantiated class with all its' resolved dependencies.
+        // then we can return a newly instantiated class with all its' dependencies resolved.
         return $class->newInstanceArgs($dependencies);
     }
 
@@ -260,7 +260,7 @@ class Container implements ContainerInterface, ArrayAccess
         // bind the key and instance to the container and mark as singleton.
         $this->bind($abstract, get_class($instance), true);
 
-        // return the instance.
+        // then return the instance for posterity.
         return $this->bindings[$abstract]['instance'] = $instance;
     }
 
