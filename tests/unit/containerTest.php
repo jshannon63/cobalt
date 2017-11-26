@@ -400,28 +400,25 @@ class containerTest extends TestCase
 
     public function testPerformanceBenchmark()
     {
-
         $app = new Container();
 
         // get base time for standard
         $before = microtime(true);
-        for($i=0;$i<100000;$i++){
-            $a[$i]=$i;
+        for ($i = 0; $i < 100000; $i++) {
+            $a[$i] = $i;
             unset($a[$i]);
         }
-        $base = microtime(true)-$before;
+        $base = microtime(true) - $before;
 
         // run test and get the time
         $before = microtime(true);
-        for($i=0;$i<100000;$i++){
+        for ($i = 0; $i < 100000; $i++) {
             $app->bind(Foo::class);
-            $a[$i]=$app->make(Foo::class);
+            $a[$i] = $app->make(Foo::class);
             unset($a[$i]);
         }
-        $test = microtime(true)-$before;
+        $test = microtime(true) - $before;
 
-
-
-        $this->assertGreaterThan(200,$test/$base);
+        $this->assertGreaterThan(200, $test / $base);
     }
 }
