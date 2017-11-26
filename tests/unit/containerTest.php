@@ -397,6 +397,4 @@ class containerTest extends TestCase
         $this->assertNotSame($yaz, $yaz1);
         $this->assertSame($yaz1, $yaz2);
     }
-
-
 }
