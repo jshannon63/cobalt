@@ -63,7 +63,7 @@ class Container implements ContainerInterface, ArrayAccess
      * @param bool $singleton
      * @throws ContainerException
      */
-    public function bind(string $abstract, $concrete = null, bool $singleton = false): void
+    public function bind(string $abstract, $concrete = null, bool $singleton = false)
     {
         // if this binding is being updated and other classes dependent on
         // it, then clear the dependency caches of the upstream bindings.
@@ -363,7 +363,7 @@ class Container implements ContainerInterface, ArrayAccess
      * @param string $offset
      * @param mixed $value
      */
-    public function offsetSet($offset, $value): void
+    public function offsetSet($offset, $value)
     {
         $this->bind($offset, $value);
     }
@@ -374,7 +374,7 @@ class Container implements ContainerInterface, ArrayAccess
      *
      * @param string $offset
      */
-    public function offsetUnset($offset): void
+    public function offsetUnset($offset)
     {
         unset($this->bindings[$offset]);
     }
