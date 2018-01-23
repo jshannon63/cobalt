@@ -3,7 +3,7 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Cobalt - An Autowired Dependency Injection Container for PHP with Reflection Based IoC
+# Cobalt - An Autowired Dependency Injection Container for PHP with Optional Dependency Caching
   
   __Realized in fewer than 160 lines of code.__
   
@@ -15,12 +15,7 @@
   
 See [kocsismate/php-di-container-benchmarks](https://github.com/kocsismate/php-di-container-benchmarks) test results [here](https://rawgit.com/kocsismate/php-di-container-benchmarks/master/var/benchmark.html)
 
-Cobalt was created to push the performance limits on what a PHP dynamic autowired DI/IoC application 
-container can achieve. The Container::class implements the PSR-11 ContainerInterface and 
-provides many of the features found in more notable container projects. Additionally, 
-dependency caching capabilities make the Cobalt container a great choice for 
-performance intensive applications. Cobalt and its simplistic code are 
-perfect for learning or for use within projects or frameworks.
+Cobalt was created to push the performance limits on what a PHP dynamic autowired DI/IoC application container can achieve. The Container::class implements the PSR-11 ContainerInterface and provides many of the features found in more notable container projects. Additionally, dependency caching capabilities make the Cobalt container a great choice for performance intensive applications. Cobalt and its simplistic code are perfect for learning or for use within projects or frameworks.
 
 The Cobalt service container has the following features:  
 
@@ -38,6 +33,7 @@ The Cobalt service container has the following features:
 12. Optional shared only (singleton) mode.
 13. Exhaustive source code documentation.
 
+Apology: I realize there are entirely too many source comments. These are meant for new developers who might appreciate them. They will most certainly help anyone looking to fully understand the inner workings of a modern service container.
 
 ## Installation
 ```
@@ -65,11 +61,7 @@ $app = new Container('cached');
 ```
 
 ### Binding into the container
-Binding does not instantiate the class. Instantiation is deferred until requested from the container.
-The bind method accepts 3 parameters... the abstract name, the concrete implementation name and a 
-true or false for defining as a singleton. Notice in all three versions we use different abstract 
-names. This is to show that the abstract name is free-form and is used as the "key" for array storage 
-of bindings.
+Binding does not instantiate the class. Instantiation is deferred until requested from the container. The bind method accepts 3 parameters... the abstract name, the concrete implementation name and a true or false for defining as a singleton. Notice in all three versions we use different abstract names. This is to show that the abstract name is free-form and is used as the "key" for array storage of bindings.
 
 **bind($abstract, $concrete=null, $singleton=false)**
 
