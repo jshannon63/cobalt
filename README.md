@@ -5,7 +5,7 @@
 
 # Cobalt - An Autowired Dependency Injection Container for PHP with Optional Dependency Caching
   
-  __Realized in fewer than 160 lines of code.__
+  __Realized in fewer than 160 lines of source.__
   
   __Well documented, perfect for building/learning.__
    
@@ -20,11 +20,11 @@ Cobalt was created to push the performance limits on what a PHP dynamic autowire
 The Cobalt service container has the following features:  
 
 1. Single class container implementing the PSR-11 ContainerInterface.
-2. Support for ArrayAccess methods on container bindings.
+2. Allows for ArrayAccess on container bindings.
 3. Automatic constructor injection of type-hinted dependencies.
 4. Dependency injection through a bind method Closure.
 5. Autowired dependency resolution using Reflection.
-6. Full top down inversion of control (IoC).
+6. Top down inversion of control (IoC).
 7. Shared instances (singletons).
 8. Abstract class bound to a concrete implementation simplifies code.
 9. Bind existing instances into the container.

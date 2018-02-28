@@ -1,11 +1,10 @@
 {
   "name": "jshannon63/cobalt",
   "type": "library",
-  "description": "Autowired Dependency Injection Container for PHP with Reflection Based IoC",
+  "description": "Autowired Dependency Injection Container for PHP with Dependency Caching",
   "keywords": [
     "dependency-injection-container",
     "ico-container",
-    "reflective-injection",
     "ioc",
     "container",
     "php",
@@ -22,15 +21,15 @@
     {
       "name": "Jim Shannon",
       "email": "jim@hltky.com",
-      "homepage": "http://jimshannon.me/"
+      "homepage": "https://jimshannon.me/"
     }
   ],
   "require": {
-    "php": ">=7.0.0",
+    "php": "^7.1",
     "psr/container": "^1.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "~6.0"
+    "phpunit/phpunit": "~7.0"
   },
   "autoload": {
     "psr-4": {

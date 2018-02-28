@@ -108,6 +108,20 @@ class Zaz
     }
 }
 
+class Yib
+{
+    protected $parms;
+
+    public function __construct(...$parms){
+        $this->parms = $parms;
+    }
+
+    public function getParms(){
+        return $this->parms;
+    }
+}
+
+
 class containerTest extends TestCase
 {
     // check all aspects of the container creation.
@@ -200,7 +214,7 @@ class containerTest extends TestCase
         $this->assertSame($foo, $foo2);
     }
 
-    // store a new binding through ArrayAccess method and retrieve it with ge
+    // store a new binding through ArrayAccess method and retrieve it
     public function testArrayAccessBinding()
     {
         $app = new Container;
@@ -211,7 +225,7 @@ class containerTest extends TestCase
 
         $this->assertInstanceOf('Tests\Baz', $app->get('YogiBear'));
 
-        $this->assertContains('Tests\Baz', $app->getBindings()['YogiBear']['concrete']);
+        $this->assertContains('Tests\Baz', $app->getBindings()['YogiBear']);
     }
 
     // verify if we register our newly created $app back into the container,
@@ -226,7 +240,7 @@ class containerTest extends TestCase
         $this->assertTrue(($app->getContainer() === $app['Fiz']->app));
     }
 
-    public function testCachedBindings()
+    public function testCachedBindings2xPerformance()
     {
         $before = microtime(true);
 
@@ -237,7 +251,7 @@ class containerTest extends TestCase
         for ($i = 0; $i < 50000; $i++) {
             $instance2 = $app->make('Foo');
         }
-        $this->assertFalse($instance1 === $instance2);
+        $this->assertNotSame($instance1,$instance2);
 
         $between = microtime(true);
 
@@ -248,13 +262,15 @@ class containerTest extends TestCase
         for ($i = 0; $i < 50000; $i++) {
             $instance4 = $app2->make('Foo2');
         }
-        $this->assertFalse($instance3 === $instance4);
+        $this->assertNotSame($instance3,$instance4);
 
         $after = microtime(true);
 
-        // cached mode should be at least 5x as fast.
-        // echo($between - $before) / (($after - $between));
-        $this->assertGreaterThan(($after - $between) * 5, $between - $before);
+        // var_dump($between - $before);
+        // var_dump($after - $between);
+
+        // cached mode should be >2x faster.
+        $this->assertGreaterThan(($after - $between)*2, $between - $before);
     }
 
     public function testBindingsListing()
@@ -355,6 +371,8 @@ class containerTest extends TestCase
 
         $foo = $app->resolve(Foo::class);
 
+        $foo2 = $app->resolve(Foo::class);
+
         $this->assertContains(Foo::class, $app->getBinding(Bar::class)['depender']);
         $this->assertTrue($app->getBinding(Foo::class)['cached']);
 
@@ -365,7 +383,21 @@ class containerTest extends TestCase
         $this->assertFalse($app->getBinding(Foo::class)['cached']);
     }
 
-    public function testClassNotInstantiable()
+    public function testCacheCreatesFreshObjectGraph()
+    {
+        $app = new Container('cached');
+
+        $app->bind(Foo::class);
+
+        $foo = $app->resolve(Foo::class);
+        $foo2 = $app->resolve(Foo::class);
+
+        $this->assertNotSame($foo, $foo2);
+        $this->assertNotSame($foo->bar(), $foo2->bar());
+        $this->assertNotSame($foo->bar()->baz(), $foo2->bar()->baz());
+    }
+
+    public function testClassNotInstantiableCasuesException()
     {
         $app = new Container();
 
@@ -374,7 +406,7 @@ class containerTest extends TestCase
         $app->make(FooNotInstantiable::class);
     }
 
-    public function testNonClassWithoutDefaultValue()
+    public function testNonClassWithoutDefaultValueCausesException()
     {
         $app = new Container();
 
@@ -397,4 +429,22 @@ class containerTest extends TestCase
         $this->assertNotSame($yaz, $yaz1);
         $this->assertSame($yaz1, $yaz2);
     }
+
+    public function testVariadicConstructorCausesException(){
+        $app = new Container('cached');
+
+        $this->expectException(ContainerException::class);
+
+        $app->bind('Yib', Yib::class);;
+    }
+
+    public function testDirectBindingOfObject(){
+        $app = new Container('cached');
+
+        $app->bind('Baz', new Baz('Peace on Earth'));
+
+        $this->assertEquals('Peace on Earth',$app['Baz']->sayWords());
+        $this->assertEquals(true,$app->getBinding('Baz')['singleton']);
+    }
+
 }
