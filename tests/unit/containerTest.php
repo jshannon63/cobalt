@@ -356,18 +356,18 @@ class containerTest extends TestCase
 
         $foo2 = $app->resolve(Foo::class);
 
-        $this->assertContains(Foo::class, $app->getBinding(Bar::class)['depender']);
-        $this->assertTrue($app->getBinding(Foo::class)['cached']);
+        $this->assertContains(Foo::class, $app->getBinding(Bar::class)[$app::DEPENDER]);
+        $this->assertTrue($app->getBinding(Foo::class)[$app::CACHED]);
 
         $app->bind(Bar::class);
 
         $bar = $app->resolve(Bar::class);
 
-        $this->assertFalse($app->getBinding(Foo::class)['cached']);
+        $this->assertFalse($app->getBinding(Foo::class)[$app::CACHED]);
 
         $foo3 = $app->resolve(Foo::class);
 
-        $this->assertTrue($app->getBinding(Foo::class)['cached']);
+        $this->assertTrue($app->getBinding(Foo::class)[$app::CACHED]);
 
     }
 
@@ -435,7 +435,7 @@ class containerTest extends TestCase
         $app->bind('Baz', new Baz('Peace on Earth'));
 
         $this->assertEquals('Peace on Earth', $app['Baz']->sayWords());
-        $this->assertEquals(true, $app->getBinding('Baz')['singleton']);
+        $this->assertEquals(true, $app->getBinding('Baz')[$app::SINGLETON]);
     }
 
     public function testTimeToCreate()
