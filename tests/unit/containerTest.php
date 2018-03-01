@@ -112,15 +112,16 @@ class Yib
 {
     protected $parms;
 
-    public function __construct(...$parms){
+    public function __construct(...$parms)
+    {
         $this->parms = $parms;
     }
 
-    public function getParms(){
+    public function getParms()
+    {
         return $this->parms;
     }
 }
-
 
 class containerTest extends TestCase
 {
@@ -183,6 +184,18 @@ class containerTest extends TestCase
         $this->assertTrue($app->has('Tests\Fiz'));
     }
 
+    public function testBindingOfClassWithoutConstructor(){
+        $app = new Container();
+
+        $app->bind('Tests\Yaz');
+
+        $this->assertTrue($app->has('Tests\Yaz'));
+
+        $yaz = $app['Tests\Yaz'];
+
+        $this->assertInstanceOf(Yaz::class,$yaz);
+    }
+
     // check dependency injection through closure
     public function testClosureInjection()
     {
@@ -193,8 +206,11 @@ class containerTest extends TestCase
         });
 
         $foo = $app->resolve('Foo');
+        $foo2 = $app->resolve('Foo');
 
         $this->assertContains('Dependency Injection Rocks!', $foo->bar()->baz()->sayWords());
+
+        $this->assertNotSame($foo, $foo2);
     }
 
     // check dependency injection through closure as singleton
@@ -238,39 +254,6 @@ class containerTest extends TestCase
         $app->bind('Fiz', Fiz::class);
 
         $this->assertTrue(($app->getContainer() === $app['Fiz']->app));
-    }
-
-    public function testCachedBindings2xPerformance()
-    {
-        $before = microtime(true);
-
-        $app = new Container();
-
-        $app->bind('Foo', Foo::class, false);
-        $instance1 = $app->make('Foo');
-        for ($i = 0; $i < 50000; $i++) {
-            $instance2 = $app->make('Foo');
-        }
-        $this->assertNotSame($instance1,$instance2);
-
-        $between = microtime(true);
-
-        $app2 = new Container('cached');
-
-        $app2->bind('Foo2', Foo::class, false);
-        $instance3 = $app2->make('Foo2');
-        for ($i = 0; $i < 50000; $i++) {
-            $instance4 = $app2->make('Foo2');
-        }
-        $this->assertNotSame($instance3,$instance4);
-
-        $after = microtime(true);
-
-        // var_dump($between - $before);
-        // var_dump($after - $between);
-
-        // cached mode should be >2x faster.
-        $this->assertGreaterThan(($after - $between)*2, $between - $before);
     }
 
     public function testBindingsListing()
@@ -365,7 +348,7 @@ class containerTest extends TestCase
 
     public function testRebindingBustsDependerCache()
     {
-        $app = new Container('cached');
+        $app = new Container();
 
         $app->bind(Foo::class);
 
@@ -381,6 +364,11 @@ class containerTest extends TestCase
         $bar = $app->resolve(Bar::class);
 
         $this->assertFalse($app->getBinding(Foo::class)['cached']);
+
+        $foo3 = $app->resolve(Foo::class);
+
+        $this->assertTrue($app->getBinding(Foo::class)['cached']);
+
     }
 
     public function testCacheCreatesFreshObjectGraph()
@@ -430,21 +418,77 @@ class containerTest extends TestCase
         $this->assertSame($yaz1, $yaz2);
     }
 
-    public function testVariadicConstructorCausesException(){
+    public function testVariadicConstructorCausesException()
+    {
         $app = new Container('cached');
 
         $this->expectException(ContainerException::class);
 
-        $app->bind('Yib', Yib::class);;
+        $app->bind('Yib', Yib::class);
+        ;
     }
 
-    public function testDirectBindingOfObject(){
+    public function testDirectBindingOfObject()
+    {
         $app = new Container('cached');
 
         $app->bind('Baz', new Baz('Peace on Earth'));
 
-        $this->assertEquals('Peace on Earth',$app['Baz']->sayWords());
-        $this->assertEquals(true,$app->getBinding('Baz')['singleton']);
+        $this->assertEquals('Peace on Earth', $app['Baz']->sayWords());
+        $this->assertEquals(true, $app->getBinding('Baz')['singleton']);
     }
 
+    public function testTimeToCreate()
+    {
+        $mode = 'shared';
+
+        $timer['start'] = microtime(true);
+        
+        $app = new Container($mode);
+        $timer['create'] = microtime(true)-$timer['start'];
+
+        $app->bind(Foo::class);
+        $timer['bind'] = ((microtime(true)-$timer['start'])-$timer['create']);
+
+        $foo = $app->resolve(Foo::class);
+        $timer['resolve'] = ((microtime(true)-$timer['start'])-$timer['bind']);
+
+        $foo2 = $app->resolve(Foo::class);
+        $timer['resolve2'] = ((microtime(true)-$timer['start'])-$timer['resolve']);
+
+        $foo3 = $app->resolve(Foo::class);
+        $timer['resolve3'] = ((microtime(true)-$timer['start'])-$timer['resolve2']);
+
+        $foo4 = $app->resolve(Foo::class);
+        $timer['resolve4'] = ((microtime(true)-$timer['start'])-$timer['resolve3']);
+
+        for($cnt=0;$cnt<5000;$cnt++){
+            $fooX = $app->resolve(Foo::class);
+        }
+        $timer['resolveX'] = ((microtime(true)-$timer['start'])-$timer['resolve4']);
+
+        $timer['total'] = (microtime(true)-$timer['start']);
+
+        unset($timer['start']);
+
+        foreach($timer as $key=>$entry){
+            $timer[$key]=number_format(1e6*$entry,2);
+        }
+
+        $timer['memory'] = ((memory_get_peak_usage()/1000)."Kbytes");
+
+        var_dump($timer);
+
+        if($mode == 'shared'){
+            $this->assertSame($foo->bar()->baz(), $foo2->bar()->baz());
+            $this->assertSame($foo2->bar()->baz(), $foo3->bar()->baz());
+            $this->assertSame($foo3->bar()->baz(), $foo4->bar()->baz());
+            $this->assertSame($foo4->bar()->baz(), $fooX->bar()->baz());
+        } else{
+            $this->assertNotSame($foo->bar()->baz(), $foo2->bar()->baz());
+            $this->assertNotSame($foo2->bar()->baz(), $foo3->bar()->baz());
+            $this->assertNotSame($foo3->bar()->baz(), $foo4->bar()->baz());
+            $this->assertNotSame($foo4->bar()->baz(), $fooX->bar()->baz());
+        }
+    }
 }

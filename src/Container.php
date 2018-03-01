@@ -34,14 +34,14 @@ class Container implements ContainerInterface, ArrayAccess
     // this.
     protected static $container;
 
-    // Mode options are 'cache' and 'shared'. invalid options are ignored.
+    // The only mode option is 'shared'. invalid options are ignored.
     protected $mode;
 
     // Array of container bindings.
     protected $bindings = [];
 
     /**
-     * DerviceContainer constructor. Set global static container. Register first
+     * Service Container constructor. Set global static container. Register first
      * binding of the container instance itself. Allow the service container
      * to resolve itself. also register a base binding representing the
      * container.
@@ -71,59 +71,40 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bind(string $abstract, $concrete = null, bool $singleton = false): void
     {
-        // If this binding is being updated and other classes dependent on
+        // If this binding is being updated and other classes are dependent on
         // it, then clear the dependency caches of the upstream bindings.
-        if (isset($this->bindings[$abstract]['depender'])) {
-            foreach ($this->bindings[$abstract]['depender'] as $depender) {
-                $this->bindings[$depender]['cached'] = false;
-                unset($this->bindings[$depender]['dependencies']);
-            }
-        }
+        $this->clearDependerCaches($abstract);
 
         // Start fresh... remove the current binding if it already exists.
         unset($this->bindings[$abstract]);
 
-        // If a $concrete class was not passed then set to $abstract.
-        if (is_null($concrete)) {
-            $concrete = $abstract;
-        }
+        // Set timestamp and pointer by reference for easy reading
+        $this->bindings[$abstract]['timestamp'] = microtime(true);
+        $binding = &$this->bindings[$abstract];
 
-        // set instance to false until we check concrete to make sure it
-        // is not a closure.
-        $instance = false;
+        // Initialize the binding array elements.
+        // Set $concrete to $abstract if not provided.
+        // If the container was initialized in shared mode, we must force singletons.
+        $binding['cached'] = false;
+        $binding['concrete'] = (is_null($concrete)) ? $abstract : $concrete;
+        $binding['singleton'] = ($this->mode == 'shared') ? true : $singleton;
 
         // If the concrete class is not a closure, then check if concrete is an
         // object. If so, set instance and singleton mode, then use reflection
         // on the class, cache it in the binding and set the full concrete name.
-        if (!$concrete instanceof Closure) {
-            try {
-                if (is_object($concrete)) {
-                    $instance = $concrete;
-                    $singleton = true;
-                } else {
-                    $this->bindings[$abstract]['reflect'] = (new ReflectionClass($concrete));
-                    $concrete = $this->bindings[$abstract]['reflect']->getName();
+        if (!$binding['concrete'] instanceof Closure) {
+            if (is_object($binding['concrete'])) {
+                $binding['instance'] = $binding['concrete'];
+                $binding['singleton'] = true;
+            } else {
+                try {
+                    $binding['reflect'] = (new ReflectionClass($binding['concrete']));
+                    $binding['concrete'] = $binding['reflect']->getName();
+                    $this->getDependencies($binding);
+                } catch (Exception $e){
+                    throw new ContainerException($binding['concrete'].' does not appear to be a valid class.');
                 }
-            } catch (Exception $e) {
-                throw new ContainerException($concrete.' does not appear to be a valid class.');
             }
-        }
-
-        // If the container was initialized in shared mode, we must force singletons.
-        if ($this->mode == 'shared') {
-            $singleton = true;
-        }
-
-        // Initialize the binding array elements.
-        $this->bindings[$abstract]['instance'] = $instance;
-        $this->bindings[$abstract]['cached'] = false;
-        $this->bindings[$abstract]['concrete'] = $concrete;
-        $this->bindings[$abstract]['singleton'] = $singleton;
-
-        // If reflection was run on the binding and we are in cached mode, them go ahead
-        // and pre-load the dependencies.
-        if(isset($this->bindings[$abstract]['reflect']) && $this->mode == 'cached'){
-            $this->getDependencies($abstract);
         }
     }
 
@@ -139,12 +120,12 @@ class Container implements ContainerInterface, ArrayAccess
     public function resolve(string $id)
     {
         // make sure the binding exists
-        if (!$this->has($id)) {
+        if (!isset($this->bindings[$id])) {
             throw new NotFoundException('Binding '.$id.' not found.');
         }
 
-        // if it is a stored singleton instance, just return it
-        if ($this->bindings[$id]['instance']) {
+        // if it is a stored instance, just return it
+        if (isset($this->bindings[$id]['instance'])) {
             return $this->bindings[$id]['instance'];
         }
 
@@ -162,106 +143,114 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function make(string $id)
     {
-        $dependencies = [];
-
-       // Check if the binding already exists. Just in case make() was called
+        // Check if the binding already exists. Just in case make() was called
         // directly.
-        if (!$this->has($id)) {
+        if (!isset($this->bindings[$id])) {
             $this->bind($id);
         }
 
-        // If it is a stored singleton instance, return it. Just in case make()
-        // was called directly.
-        if ($this->bindings[$id]['instance']) {
-            return $this->bindings[$id]['instance'];
+        // create reference for ease of reading
+        $binding = &$this->bindings[$id];
+
+        // If it is a stored instance, return it.
+        if (isset($binding['instance'])) {
+            return $binding['instance'];
         }
 
         // If the concrete implementation is a closure then let's run it and
         // return it. If it is a singleton then store it first.
-        if ($this->bindings[$id]['concrete'] instanceof Closure) {
-            if ($this->bindings[$id]['singleton']) {
-                return $this->bindings[$id]['instance'] = $this->bindings[$id]['concrete']();
+        if ($binding['concrete'] instanceof Closure) {
+            if ($binding['singleton']) {
+                $binding['instance'] = $binding['concrete']();
+                return $binding['instance'];
             }
-            return $this->bindings[$id]['concrete']();
+            return $binding['concrete']();
         }
 
-        // If we are not in cached mode, then we must discover the dependencies
-        // each time we make the binding.
-        if($this->mode != 'cached'){
-            $this->getDependencies($id);
+        // If this binding's cache was busted then reload the dependencies.
+        if (!$binding['cached'] && isset($binding['reflect'])) {
+            $this->getDependencies($binding);
         }
 
-        // If there are no contructor dependencies then build it and return it. If
+        // If there are no constructor dependencies then build it and return it. If
         // it is a singleton then we can store the instance for later use.
-        if ($this->bindings[$id]['dependencies'] == []) {
-            if ($this->bindings[$id]['singleton']) {
-                return $this->bindings[$id]['instance'] = new $this->bindings[$id]['concrete'];
+        if ($binding['dependencies'] == []) {
+            if ($binding['singleton']) {
+                unset($binding['dependencies']);
+                unset($binding['reflect']);
+                $binding['cached'] = false;
+                $binding['instance'] = new $binding['concrete'];
+                return $binding['instance'];
             }
-            return new $this->bindings[$id]['concrete'];
+            return new $binding['concrete'];
         }
+
+        $dependencies = [];
 
         // Now we can recursively dive through all the dependencies... for as deep
         // as they run in the graph. We will make new every dependency based on
-        // the dependency informaiton saved earlier.
-        foreach($this->bindings[$id]['dependencies'] as $type => $dependency){
-            // die(var_dump($dependency));
-            if($dependency['type'] == 'class'){
+        // the dependency information saved earlier.
+        foreach ($binding['dependencies'] as $type => $dependency) {
+            if ($dependency['type'] == 'class') {
                 $dependencies[] = $this->make($dependency['value']);
                 $this->bindings[$dependency['value']]['depender'][] = $id;
-            }
-            elseif($dependency['type'] == 'default'){
+                array_unique($this->bindings[$dependency['value']]['depender']);
+            } elseif ($dependency['type'] == 'default') {
                 $dependencies[] = $dependency['value'];
             }
         }
         // We've reached the bottom on the dependency chain for this binding and
-        // all its' dependencies are hydrated. If it is a singleton, let's 
+        // all its dependencies are hydrated. If it is a singleton, let's
         // store the instance and return it.
-        if ($this->bindings[$id]['singleton']) {
-            return $this->bindings[$id]['instance'] = $this->bindings[$id]['reflect']->newInstanceArgs($dependencies);
-        }            
+        if ($binding['singleton']) {
+            $binding['instance'] = $binding['reflect']->newInstanceArgs($dependencies);
+            unset($binding['dependencies']);
+            unset($binding['reflect']);
+            $binding['cached'] = false;
+            return $binding['instance'];
+        }
 
         // Otherwise we return a newly instantiated class with all its' dependencies
         // resolved.
-        return $this->bindings[$id]['reflect']->newInstanceArgs($dependencies);
-        
+        return $binding['reflect']->newInstanceArgs($dependencies);
     }
 
     /**
-     * Get all dependency information for the binding. Do not hydrate the 
+     * Get all dependency information for the binding. Do not hydrate the
      * the dependencies, but store the data to the binding registry for
      * later use.
-     * 
-     * @param  string  $id
+     *
+     * @param  array  $binding
      * @return void
      * @throws ContainerException
      */
-    private function getDependencies($id): void
+    private function getDependencies(&$binding): void
     {
-        // this will hold our dependencies information
-        $dependencies = [];
-
         // Let's retrieve the ReflectionClass object previously generated
-        // during binding. Store it to a $class variable for ease of 
+        // during binding. Store it to a $class variable for ease of
         // reading.
-        $class = $this->bindings[$id]['reflect'];
+        $class = $binding['reflect'];
 
         // If it's not instantiable, then we can do nothing... throw exception.
         if (!$class->isInstantiable()) {
-            throw new ContainerException($this->bindings[$id]['concrete'].' can not be instantiated.');
+            throw new ContainerException($binding['concrete'].' can not be instantiated.');
         }
 
         // Get the class constructor and see what we have.
         $constructor = $class->getConstructor();
 
-        // If there is no constructor, return an emoty array of dependencies
+        // If there is no constructor, return an empty array of dependencies
         if (!$constructor) {
-            $this->bindings[$id]['cached'] = true;
-            $this->bindings[$id]['dependencies'] = [];
+            $binding['cached'] = true;
+            $binding['dependencies'] = [];
             return;
         }
 
         // Otherwise, get all the constructors' parameters.
         $parameters = $constructor->getParameters();
+
+        // this will hold our dependencies information
+        $dependencies = [];
 
         // Then loop through the parameters to see what is in the constructor.
         foreach ($parameters as $key => $parameter) {
@@ -272,7 +261,7 @@ class Container implements ContainerInterface, ArrayAccess
             // been given a default value. If so, store the value for now. if
             // not, or if we have been passed a variadic, we can do nothing... throw an exception.
             if (is_null($dependency)) {
-                if($parameter->isVariadic()){
+                if ($parameter->isVariadic()) {
                     throw new ContainerException('Variadic constructor argument ('.$parameter->name.') not supported. Suggest Closure Binding.');
                 }
                 if ($parameter->isDefaultValueAvailable()) {
@@ -291,10 +280,10 @@ class Container implements ContainerInterface, ArrayAccess
         }
 
         // Getting to this point means the binding is fully defined. So
-        // we will cache the values in the registry and mark it as 
+        // we will cache the values in the registry and mark it as
         // cached.
-        $this->bindings[$id]['cached'] = true;
-        $this->bindings[$id]['dependencies'] = $dependencies;
+        $binding['cached'] = true;
+        $binding['dependencies'] = $dependencies;
     }
 
     /**
@@ -308,10 +297,27 @@ class Container implements ContainerInterface, ArrayAccess
     public function instance(string $abstract, $instance)
     {
         // bind the key and instance to the container and mark as singleton.
-        $this->bind($abstract, get_class($instance), true);
+        $this->bind($abstract, $instance, true);
 
         // then return the instance for posterity.
         return $this->bindings[$abstract]['instance'] = $instance;
+    }
+
+    /**
+     * Clear caches for all dependers of provided
+     * binding.
+     *
+     * @param  string  $id
+     */
+    private function clearDependerCaches($id): void
+    {
+        if(!isset($this->bindings[$id]['depender'])){
+            return;
+        }
+        foreach ($this->bindings[$id]['depender'] as $depender) {
+            $this->bindings[$depender]['cached'] = false;
+            unset($this->bindings[$depender]['dependencies']);
+        }
     }
 
     /**
@@ -430,5 +436,4 @@ class Container implements ContainerInterface, ArrayAccess
     {
         unset($this->bindings[$offset]);
     }
-
 }
