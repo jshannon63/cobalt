@@ -207,7 +207,7 @@ class Container implements ContainerInterface, ArrayAccess
             if ($dependency[self::TYPE] == self::CLASSNAME) {
                 $dependencies[] = $this->make($dependency[self::VALUE]);
                 $this->bindings[$dependency[self::VALUE]][self::DEPENDER][] = $id;
-//                array_unique($this->bindings[$dependency[self::VALUE]][self::DEPENDER]);
+                array_unique($this->bindings[$dependency[self::VALUE]][self::DEPENDER]);
             } elseif ($dependency[self::TYPE] == self::DEFAULT) {
                 $dependencies[] = $dependency[self::VALUE];
             }
