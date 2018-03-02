@@ -111,7 +111,7 @@ class Container implements ContainerInterface, ArrayAccess
         // If the concrete class is not a closure, then check if concrete is an
         // object. If so, set instance and singleton mode, then use reflection
         // on the class, cache it in the binding and set the full concrete name.
-        if (!$binding[self::CONCRETE] instanceof Closure) {
+        if (! $binding[self::CONCRETE] instanceof Closure) {
             if (is_object($binding[self::CONCRETE])) {
                 $this->instances[$abstract] = $binding[self::CONCRETE];
                 $binding[self::SINGLETON] = true;
@@ -120,7 +120,7 @@ class Container implements ContainerInterface, ArrayAccess
                     $binding[self::REFLECTION] = (new ReflectionClass($binding[self::CONCRETE]));
                     $binding[self::CONCRETE] = $binding[self::REFLECTION]->getName();
                     $this->getDependencies($binding);
-                } catch (Exception $e){
+                } catch (Exception $e) {
                     throw new ContainerException($binding[self::CONCRETE].' does not appear to be a valid class.');
                 }
             }
@@ -139,7 +139,7 @@ class Container implements ContainerInterface, ArrayAccess
     public function resolve(string $id)
     {
         // make sure the binding exists
-        if (!isset($this->bindings[$id])) {
+        if (! isset($this->bindings[$id])) {
             throw new NotFoundException('Binding '.$id.' not found.');
         }
 
@@ -156,19 +156,21 @@ class Container implements ContainerInterface, ArrayAccess
         // it's not that simple, so let's run create. We get the
         // closure and execute it to get our instance.
         $this->create($id);
-        if(isset($this->instances[$id])) {
+        if (isset($this->instances[$id])) {
             return $this->instances[$id];
         }
+
         return $this->cache[$id]();
     }
 
     /**
-     * Old version of make deprecated but held for backward compatibility
+     * Old version of make deprecated but held for backward compatibility.
      *
      * @param $id
      * @return object
      */
-    public function make($id){
+    public function make($id)
+    {
         return $this->resolve($id);
     }
 
@@ -184,7 +186,7 @@ class Container implements ContainerInterface, ArrayAccess
     {
         // Check if the binding already exists. Forces a bind
         // whenever create is called internally.
-        if (!isset($this->bindings[$id])) {
+        if (! isset($this->bindings[$id])) {
             $this->bind($id);
         }
 
@@ -208,9 +210,10 @@ class Container implements ContainerInterface, ArrayAccess
                 return $this->instances[$id] = $binding[self::CONCRETE]();
             }
             $closure =
-                function() use ($binding) {
+                function () use ($binding) {
                     return $binding[self::CONCRETE]();
                 };
+
             return $this->cache[$id] = $closure;
         }
 
@@ -220,12 +223,14 @@ class Container implements ContainerInterface, ArrayAccess
             if ($binding[self::SINGLETON]) {
                 unset($binding[self::DEPENDENCIES]);
                 unset($binding[self::REFLECTION]);
+
                 return $this->instances[$id] = new $binding[self::CONCRETE];
             }
             $closure =
-                function() use ($binding){
+                function () use ($binding) {
                     return new $binding[self::CONCRETE];
                 };
+
             return $this->cache[$id] = $closure;
         }
 
@@ -245,29 +250,32 @@ class Container implements ContainerInterface, ArrayAccess
         // all its dependencies are hydrated. If it is a singleton, let's
         // store the instance and return it.
         if ($binding[self::SINGLETON]) {
-            foreach ($dependencies as $key => $dependency){
-                if($dependency instanceof Closure){
+            foreach ($dependencies as $key => $dependency) {
+                if ($dependency instanceof Closure) {
                     $dependencies[$key] = $dependency();
                 }
             }
             $this->instances[$id] = $binding[self::REFLECTION]->newInstanceArgs($dependencies);
             unset($binding[self::DEPENDENCIES]);
             unset($binding[self::REFLECTION]);
+
             return $this->instances[$id];
         }
 
         // Otherwise we return a newly instantiated class with all its' dependencies
         // resolved.
         $closure =
-            function() use ($binding,$dependencies) {
-                foreach ($dependencies as $key => $dependency){
-                    if($dependency instanceof Closure){
+            function () use ($binding,$dependencies) {
+                foreach ($dependencies as $key => $dependency) {
+                    if ($dependency instanceof Closure) {
                         $dependencies[$key] = $dependency();
                     }
                 }
+
                 return $binding[self::REFLECTION]->newInstanceArgs($dependencies);
             };
         $this->cache[$id] = $closure;
+
         return $closure;
     }
 
@@ -288,7 +296,7 @@ class Container implements ContainerInterface, ArrayAccess
         $class = $binding[self::REFLECTION];
 
         // If it's not instantiable, then we can do nothing... throw exception.
-        if (!$class->isInstantiable()) {
+        if (! $class->isInstantiable()) {
             throw new ContainerException($binding[self::CONCRETE].' can not be instantiated.');
         }
 
@@ -296,8 +304,9 @@ class Container implements ContainerInterface, ArrayAccess
         $constructor = $class->getConstructor();
 
         // If there is no constructor, return an empty array of dependencies
-        if (!$constructor) {
+        if (! $constructor) {
             $binding[self::DEPENDENCIES] = [];
+
             return;
         }
 
@@ -443,7 +452,7 @@ class Container implements ContainerInterface, ArrayAccess
     public function offsetGet($offset)
     {
         // if the binding does not exist then throw exception.
-        if (!$this->has($offset)) {
+        if (! $this->has($offset)) {
             throw new NotFoundException('Binding '.$offset.' not found.');
         }
 
