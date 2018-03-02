@@ -349,7 +349,7 @@ class containerTest extends TestCase
 
     public function testCacheCreatesFreshObjectGraph()
     {
-        $app = new Container('cached');
+        $app = new Container();
 
         $app->bind(Foo::class);
 

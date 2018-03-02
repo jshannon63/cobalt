@@ -34,23 +34,23 @@ class Container implements ContainerInterface, ArrayAccess
     const CONCRETE = 0;
     const INSTANCE = 1;
     const SINGLETON = 2;
-    const CACHED = 3;
+    const STATUS = 3;
     const REFLECTION = 4;
     const DEPENDER = 5;
     const DEPENDENCIES = 6;
-    const TIMESTAMP = 7;
+    const ID = 7;
     const VALUE = 8;
     const CLASSNAME = 9;
     const TYPE = 10;
     const DEFAULT = 11;
-    const ABSTRACT = 12;
 
     // this.
     protected static $container;
 
+    protected $object_id = 0;
+
     // The only mode option is 'shared'. invalid options are ignored.
     protected $mode;
-    protected $depth = 0;
 
     // Array of container binding instructions.
     protected $bindings = [];
@@ -92,17 +92,19 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bind(string $abstract, $concrete = null, bool $singleton = false): void
     {
-        // Start fresh... remove the current binding if it already exists.
+        // Start fresh... if this is a rebound, then remove all evidence
+        // of the stale binding.
+        unset($this->instances[$abstract]);
+        unset($this->cache[$abstract]);
         unset($this->bindings[$abstract]);
 
-        // Set timestamp and pointer by reference for easy reading
-        $this->bindings[$abstract][self::TIMESTAMP] = microtime(true);
+        // Set ID and pointer by reference for easy reading
+        $this->bindings[$abstract][self::ID] = $this->object_id++;
         $binding = &$this->bindings[$abstract];
 
         // Initialize the binding array elements.
         // Set $concrete to $abstract if not provided.
         // If the container was initialized in shared mode, then force singletons.
-        $binding[self::CACHED] = false;
         $binding[self::CONCRETE] = (is_null($concrete)) ? $abstract : $concrete;
         $binding[self::SINGLETON] = ($this->mode == 'shared') ? true : $singleton;
 
@@ -113,7 +115,6 @@ class Container implements ContainerInterface, ArrayAccess
             if (is_object($binding[self::CONCRETE])) {
                 $this->instances[$abstract] = $binding[self::CONCRETE];
                 $binding[self::SINGLETON] = true;
-                $binding[self::CACHED] = true;
             } else {
                 try {
                     $binding[self::REFLECTION] = (new ReflectionClass($binding[self::CONCRETE]));
@@ -148,7 +149,7 @@ class Container implements ContainerInterface, ArrayAccess
         }
 
         // If it is a cached binding, instantiate and return it.
-        if (isset($this->cache[$id]) && $this->bindings[$id][self::CACHED]) {
+        if (isset($this->cache[$id])) {
             return $this->cache[$id]();
         }
 
@@ -181,7 +182,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     private function create(string $id)
     {
-        // Check if the binding already exists. Rgi forces a bind
+        // Check if the binding already exists. Forces a bind
         // whenever create is called internally.
         if (!isset($this->bindings[$id])) {
             $this->bind($id);
@@ -196,7 +197,7 @@ class Container implements ContainerInterface, ArrayAccess
         }
 
         // If it is a cached binding, instantiate and return it.
-        if (isset($this->cache[$id]) && $binding[self::CACHED]) {
+        if (isset($this->cache[$id])) {
             return $this->cache[$id]();
         }
 
@@ -204,16 +205,13 @@ class Container implements ContainerInterface, ArrayAccess
         // return it. If it is a singleton then store it first.
         if ($binding[self::CONCRETE] instanceof Closure) {
             if ($binding[self::SINGLETON]) {
-                $binding[self::CACHED] = true;
                 return $this->instances[$id] = $binding[self::CONCRETE]();
             }
             $closure =
                 function() use ($binding) {
                     return $binding[self::CONCRETE]();
                 };
-            $this->cache[$id] = $closure;
-            $binding[self::CACHED] = true;
-            return $closure();
+            return $this->cache[$id] = $closure;
         }
 
         // If there are no constructor dependencies then build it and return it. If
@@ -222,16 +220,13 @@ class Container implements ContainerInterface, ArrayAccess
             if ($binding[self::SINGLETON]) {
                 unset($binding[self::DEPENDENCIES]);
                 unset($binding[self::REFLECTION]);
-                $binding[self::CACHED] = true;
                 return $this->instances[$id] = new $binding[self::CONCRETE];
             }
             $closure =
                 function() use ($binding){
                     return new $binding[self::CONCRETE];
                 };
-            $this->cache[$id] = $closure;
-            $binding[self::CACHED] = true;
-            return $closure();
+            return $this->cache[$id] = $closure;
         }
 
         $dependencies = [];
@@ -250,15 +245,14 @@ class Container implements ContainerInterface, ArrayAccess
         // all its dependencies are hydrated. If it is a singleton, let's
         // store the instance and return it.
         if ($binding[self::SINGLETON]) {
-            foreach ($dependencies as $key => $expand){
-                if($expand instanceof Closure){
-                    $dependencies[$key] = $expand();
+            foreach ($dependencies as $key => $dependency){
+                if($dependency instanceof Closure){
+                    $dependencies[$key] = $dependency();
                 }
             }
             $this->instances[$id] = $binding[self::REFLECTION]->newInstanceArgs($dependencies);
             unset($binding[self::DEPENDENCIES]);
             unset($binding[self::REFLECTION]);
-            $binding[self::CACHED] = true;
             return $this->instances[$id];
         }
 
@@ -274,7 +268,6 @@ class Container implements ContainerInterface, ArrayAccess
                 return $binding[self::REFLECTION]->newInstanceArgs($dependencies);
             };
         $this->cache[$id] = $closure;
-        $binding[self::CACHED] = true;
         return $closure;
     }
 
