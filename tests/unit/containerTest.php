@@ -344,8 +344,6 @@ class containerTest extends TestCase
         $instance1 = $app['Foo'];
         $instance2 = $app['Foo'];
 
-
-
         $this->assertSame($instance1, $instance2);
     }
 
@@ -422,7 +420,7 @@ class containerTest extends TestCase
 
     public function testTimeToCreate()
     {
-        $mode = '';
+        $mode = 'shared';
 
         $timer['start'] = microtime(true);
         

@@ -205,8 +205,7 @@ class Container implements ContainerInterface, ArrayAccess
         if ($binding[self::CONCRETE] instanceof Closure) {
             if ($binding[self::SINGLETON]) {
                 $binding[self::CACHED] = true;
-                $this->instances[$id] = $binding[self::CONCRETE]();
-                return;
+                return $this->instances[$id] = $binding[self::CONCRETE]();
             }
             $closure =
                 function() use ($binding) {
@@ -224,8 +223,7 @@ class Container implements ContainerInterface, ArrayAccess
                 unset($binding[self::DEPENDENCIES]);
                 unset($binding[self::REFLECTION]);
                 $binding[self::CACHED] = true;
-                $this->instances[$id] = new $binding[self::CONCRETE];
-                return;
+                return $this->instances[$id] = new $binding[self::CONCRETE];
             }
             $closure =
                 function() use ($binding){
