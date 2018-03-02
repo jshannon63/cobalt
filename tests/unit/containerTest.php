@@ -135,7 +135,7 @@ class containerTest extends TestCase
         $this->assertTrue($app[Container::class] instanceof Container);
 
         // check Container instance is bound as singleton
-        $app2 = $app->make(Container::class);
+        $app2 = $app->resolve(Container::class);
         $this->assertTrue($app === $app2);
     }
 
@@ -161,6 +161,7 @@ class containerTest extends TestCase
 
         $app->bind('FooInterface', 'Tests\Foo2');
         $foo2 = $app['FooInterface'];
+
         $this->assertTrue($foo2 instanceof Foo2);
     }
 
@@ -343,32 +344,9 @@ class containerTest extends TestCase
         $instance1 = $app['Foo'];
         $instance2 = $app['Foo'];
 
+
+
         $this->assertSame($instance1, $instance2);
-    }
-
-    public function testRebindingBustsDependerCache()
-    {
-        $app = new Container();
-
-        $app->bind(Foo::class);
-
-        $foo = $app->resolve(Foo::class);
-
-        $foo2 = $app->resolve(Foo::class);
-
-        $this->assertContains(Foo::class, $app->getBinding(Bar::class)[$app::DEPENDER]);
-        $this->assertTrue($app->getBinding(Foo::class)[$app::CACHED]);
-
-        $app->bind(Bar::class);
-
-        $bar = $app->resolve(Bar::class);
-
-        $this->assertFalse($app->getBinding(Foo::class)[$app::CACHED]);
-
-        $foo3 = $app->resolve(Foo::class);
-
-        $this->assertTrue($app->getBinding(Foo::class)[$app::CACHED]);
-
     }
 
     public function testCacheCreatesFreshObjectGraph()
@@ -391,7 +369,9 @@ class containerTest extends TestCase
 
         $this->expectException(ContainerException::class);
 
-        $app->make(FooNotInstantiable::class);
+        $app->bind(FooNotInstantiable::class);
+
+        $app->resolve(FooNotInstantiable::class);
     }
 
     public function testNonClassWithoutDefaultValueCausesException()
@@ -400,7 +380,9 @@ class containerTest extends TestCase
 
         $this->expectException(ContainerException::class);
 
-        $app->make(Zaz::class);
+        $app->bind(Zaz::class);
+
+        $app->resolve(Zaz::class);
     }
 
     public function testNonConstructorClasses()
@@ -410,9 +392,9 @@ class containerTest extends TestCase
         $app->bind('YazFactory', Yaz::class, false);
         $app->bind('YazSingleton', Yaz::class, true);
 
-        $yaz = $app->make('YazFactory');
-        $yaz1 = $app->make('YazSingleton');
-        $yaz2 = $app->make('YazSingleton');
+        $yaz = $app->resolve('YazFactory');
+        $yaz1 = $app->resolve('YazSingleton');
+        $yaz2 = $app->resolve('YazSingleton');
 
         $this->assertNotSame($yaz, $yaz1);
         $this->assertSame($yaz1, $yaz2);
@@ -440,7 +422,7 @@ class containerTest extends TestCase
 
     public function testTimeToCreate()
     {
-        $mode = 'shared';
+        $mode = '';
 
         $timer['start'] = microtime(true);
         
@@ -462,7 +444,7 @@ class containerTest extends TestCase
         $foo4 = $app->resolve(Foo::class);
         $timer['resolve4'] = ((microtime(true)-$timer['start'])-$timer['resolve3']);
 
-        for($cnt=0;$cnt<5000;$cnt++){
+        for($cnt=0;$cnt<100000;$cnt++){
             $fooX = $app->resolve(Foo::class);
         }
         $timer['resolveX'] = ((microtime(true)-$timer['start'])-$timer['resolve4']);
@@ -490,5 +472,16 @@ class containerTest extends TestCase
             $this->assertNotSame($foo3->bar()->baz(), $foo4->bar()->baz());
             $this->assertNotSame($foo4->bar()->baz(), $fooX->bar()->baz());
         }
+    }
+
+    public function testMakeCommandPointsToResolve(){
+        $app = new Container();
+
+        $app->bind('Baz', new Baz('Peace on Earth'));
+
+        $test = $app->make('Baz');
+
+        $this->assertEquals('Peace on Earth', $test->sayWords());
+        $this->assertEquals(true, $app->getBinding('Baz')[$app::SINGLETON]);
     }
 }
