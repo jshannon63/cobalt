@@ -96,6 +96,10 @@ class Fiz
 
 class Yaz
 {
+    public function sayHello()
+    {
+        return "Hello";
+    }
 }
 
 class Zaz
@@ -117,7 +121,7 @@ class Yib
         $this->parms = $parms;
     }
 
-    public function getParms()
+    public function __invoke()
     {
         return $this->parms;
     }
@@ -142,12 +146,13 @@ class containerTest extends TestCase
     // make sure a singleton binding returns the same instance each time.
     public function testSingletonResolution()
     {
-        $app = new Container;
+        $app = new Container('shared');
 
         $app->bind('Foo', 'Tests\Foo', true);
         $instance1 = $app->resolve('Foo');
         $instance2 = $app->resolve('Foo');
-        $this->assertTrue($instance1 === $instance2);
+
+        $this->assertSame($instance1, $instance2);
     }
 
     // verify concrete implementation switchout on interface binding
@@ -185,8 +190,7 @@ class containerTest extends TestCase
         $this->assertTrue($app->has('Tests\Fiz'));
     }
 
-    public function testBindingOfClassWithoutConstructor()
-    {
+    public function testBindingOfClassWithoutConstructor(){
         $app = new Container();
 
         $app->bind('Tests\Yaz');
@@ -195,7 +199,7 @@ class containerTest extends TestCase
 
         $yaz = $app['Tests\Yaz'];
 
-        $this->assertInstanceOf(Yaz::class, $yaz);
+        $this->assertInstanceOf(Yaz::class,$yaz);
     }
 
     // check dependency injection through closure
@@ -399,13 +403,23 @@ class containerTest extends TestCase
         $this->assertSame($yaz1, $yaz2);
     }
 
-    public function testVariadicConstructorCausesException()
+    public function testVariadicConstructor()
     {
         $app = new Container('cached');
 
-        $this->expectException(ContainerException::class);
+        $app->bind('Yib', function(){
+            return new Yib('I','am','variadic',new Yaz,function(){
+                return "Closure";
+            });
+        });
 
-        $app->bind('Yib', Yib::class);
+        $value = $app['Yib']();
+        $this->assertEquals(['I','am','variadic',new Yaz,function(){
+            return "closure";
+        }], $value);
+        $this->assertEquals('Hello', $value[3]->sayHello());
+        $this->assertEquals('Closure', $value[4]());
+
     }
 
     public function testDirectBindingOfObject()
@@ -425,46 +439,44 @@ class containerTest extends TestCase
         $timer['start'] = microtime(true);
 
         $app = new Container($mode);
-        $timer['create'] = microtime(true) - $timer['start'];
+        $timer['create'] = microtime(true)-$timer['start'];
 
         $app->bind(Foo::class);
-        $timer['bind'] = ((microtime(true) - $timer['start']) - $timer['create']);
+        $timer['bind'] = ((microtime(true)-$timer['start'])-$timer['create']);
 
         $foo = $app->resolve(Foo::class);
-        $timer['resolve'] = ((microtime(true) - $timer['start']) - $timer['bind']);
+        $timer['resolve'] = ((microtime(true)-$timer['start'])-$timer['bind']);
 
         $foo2 = $app->resolve(Foo::class);
-        $timer['resolve2'] = ((microtime(true) - $timer['start']) - $timer['resolve']);
+        $timer['resolve2'] = ((microtime(true)-$timer['start'])-$timer['resolve']);
 
         $foo3 = $app->resolve(Foo::class);
-        $timer['resolve3'] = ((microtime(true) - $timer['start']) - $timer['resolve2']);
+        $timer['resolve3'] = ((microtime(true)-$timer['start'])-$timer['resolve2']);
 
         $foo4 = $app->resolve(Foo::class);
-        $timer['resolve4'] = ((microtime(true) - $timer['start']) - $timer['resolve3']);
+        $timer['resolve4'] = ((microtime(true)-$timer['start'])-$timer['resolve3']);
 
-        for ($cnt = 0; $cnt < 100000; $cnt++) {
+        for($cnt=0;$cnt<100000;$cnt++){
             $fooX = $app->resolve(Foo::class);
         }
-        $timer['resolveX'] = ((microtime(true) - $timer['start']) - $timer['resolve4']);
+        $timer['resolveX'] = ((microtime(true)-$timer['start'])-$timer['resolve4']);
 
-        $timer['total'] = (microtime(true) - $timer['start']);
+        $timer['total'] = (microtime(true)-$timer['start']);
 
         unset($timer['start']);
 
-        foreach ($timer as $key=>$entry) {
-            $timer[$key] = number_format(1e6 * $entry, 2);
+        foreach($timer as $key=>$entry){
+            $timer[$key]=number_format(1e6*$entry,2);
         }
 
-        $timer['memory'] = ((memory_get_peak_usage() / 1000).'Kbytes');
+        $timer['memory'] = ((memory_get_peak_usage()/1000)."Kbytes");
 
-        var_dump($timer);
-
-        if ($mode == 'shared') {
+        if($mode == 'shared'){
             $this->assertSame($foo->bar()->baz(), $foo2->bar()->baz());
             $this->assertSame($foo2->bar()->baz(), $foo3->bar()->baz());
             $this->assertSame($foo3->bar()->baz(), $foo4->bar()->baz());
             $this->assertSame($foo4->bar()->baz(), $fooX->bar()->baz());
-        } else {
+        } else{
             $this->assertNotSame($foo->bar()->baz(), $foo2->bar()->baz());
             $this->assertNotSame($foo2->bar()->baz(), $foo3->bar()->baz());
             $this->assertNotSame($foo3->bar()->baz(), $foo4->bar()->baz());
@@ -472,15 +484,11 @@ class containerTest extends TestCase
         }
     }
 
-    public function testMakeCommandPointsToResolve()
-    {
+    public function testDeprecatedMakeCommandStillWorks(){
         $app = new Container();
 
-        $app->bind('Baz', new Baz('Peace on Earth'));
+        $test = $app->make(Baz::class);
 
-        $test = $app->make('Baz');
-
-        $this->assertEquals('Peace on Earth', $test->sayWords());
-        $this->assertEquals(true, $app->getBinding('Baz')[$app::SINGLETON]);
+        $this->assertEquals('default words', $test->sayWords());
     }
 }
