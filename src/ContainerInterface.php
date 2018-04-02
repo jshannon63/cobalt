@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jshannon63\Cobalt;
 
-use Psr\Container\ContainerInterface as PsrContainerInterface;
 use ArrayAccess;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 
 /**
  * Cobalt Service Container Interface.
@@ -60,7 +60,7 @@ interface ContainerInterface extends PsrContainerInterface, ArrayAccess
     public function instance($abstract, $instance);
 
     /**
-     * Create an alias to an existing cached binding
+     * Create an alias to an existing cached binding.
      *
      * @param  string $alias
      * @param  string $binding
@@ -104,7 +104,6 @@ interface ContainerInterface extends PsrContainerInterface, ArrayAccess
      * @return object
      * @throws NotFoundException
      * @throws ContainerException
-     *
      */
     public function get($id);
 
@@ -159,4 +158,3 @@ interface ContainerInterface extends PsrContainerInterface, ArrayAccess
      */
     public function offsetUnset($offset);
 }
-

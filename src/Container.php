@@ -29,13 +29,13 @@ use ReflectionClass;
 class Container implements ContainerInterface
 {
     /**
-     * Global container instance
+     * Global container instance.
      * @var Container
      */
     protected static $container;
 
     /**
-     * Binding ID
+     * Binding ID.
      * @var int
      */
     protected $bindingId = 0;
@@ -61,7 +61,7 @@ class Container implements ContainerInterface
     protected $cache = [];
 
     /**
-     * Array of aliased cached bindings keyed by alias
+     * Array of aliased cached bindings keyed by alias.
      *
      * @var array
      */
@@ -114,7 +114,7 @@ class Container implements ContainerInterface
         // If the concrete class is not a closure, then check if concrete is an object.
         // If so, set instance and singleton mode, then use reflection on the class,
         // cache it in the binding and set the full concrete name.
-        if (!$binding['concrete'] instanceof Closure) {
+        if (! $binding['concrete'] instanceof Closure) {
             if (is_object($binding['concrete'])) {
                 $binding['singleton'] = true;
                 $this->prepareBindingClosure($abstract, $binding['concrete']);
@@ -143,7 +143,7 @@ class Container implements ContainerInterface
     public function resolve($id)
     {
         // make sure the binding exists
-        if (!isset($this->bindings[$id])) {
+        if (! isset($this->bindings[$id])) {
             throw new NotFoundException('Binding '.$id.' not found.');
         }
 
@@ -169,6 +169,7 @@ class Container implements ContainerInterface
     public function make($id, ...$args)
     {
         $this->bind($id, ...$args);
+
         return $this->resolve($id);
     }
 
@@ -185,7 +186,7 @@ class Container implements ContainerInterface
     {
         // Check if the binding already exists. Forces a bind
         // whenever create is called internally.
-        if (!isset($this->bindings[$id])) {
+        if (! isset($this->bindings[$id])) {
             $this->bind($id);
         }
 
@@ -234,14 +235,15 @@ class Container implements ContainerInterface
     {
         // Let's use the ReflectionClass object previously generated during binding.
         // If it's not instantiable, then we can do nothing... throw exception.
-        if (!$binding['reflector']->isInstantiable()) {
+        if (! $binding['reflector']->isInstantiable()) {
             throw new ContainerException($binding['concrete'].' can not be instantiated.');
         }
 
         // Get the class constructor and see what we have. If there is no constructor,
         // then return an empty array of dependencies.
-        if (!$constructor = $binding['reflector']->getConstructor()) {
+        if (! $constructor = $binding['reflector']->getConstructor()) {
             $binding['dependencies'] = [];
+
             return;
         }
 
@@ -284,6 +286,7 @@ class Container implements ContainerInterface
                 $dependencies[$key]['value'] = $dependency->name;
             }
         }
+
         return $dependencies;
     }
 
@@ -300,6 +303,7 @@ class Container implements ContainerInterface
         if ($this->bindings[$id]['singleton']) {
             return $this->prepareSingletonBindingClosure($id, $blueprint, $dependencies);
         }
+
         return $this->preparePrototypeBindingClosure($id, $blueprint, $dependencies);
     }
 
@@ -320,12 +324,14 @@ class Container implements ContainerInterface
                         $dependencies[$key] = $dependency();
                     }
                 }
+
                 return $blueprint->newInstanceArgs($dependencies);
             };
         }
         if ($blueprint instanceof Closure) {
             return $this->cache[$id] = $blueprint;
         }
+
         return $this->cache[$id] = function () use ($blueprint) {
             return new $blueprint;
         };
@@ -385,7 +391,7 @@ class Container implements ContainerInterface
     }
 
     /**
-     * Create an alias to an existing cached binding
+     * Create an alias to an existing cached binding.
      *
      * @param  string $alias
      * @param  string $binding
@@ -402,7 +408,7 @@ class Container implements ContainerInterface
     }
 
     /**
-     * Create empty binding in the registry and set ID
+     * Create empty binding in the registry and set ID.
      *
      * @param  string $id
      */
@@ -412,7 +418,7 @@ class Container implements ContainerInterface
     }
 
     /**
-     * Remove all traces of the specified binding
+     * Remove all traces of the specified binding.
      *
      * @param  string $id
      */
@@ -465,7 +471,6 @@ class Container implements ContainerInterface
      * @return object
      * @throws NotFoundException
      * @throws ContainerException
-     *
      */
     public function get($id)
     {
@@ -512,7 +517,7 @@ class Container implements ContainerInterface
     public function offsetGet($offset)
     {
         // if the binding does not exist then throw exception.
-        if (!$this->has($offset)) {
+        if (! $this->has($offset)) {
             throw new NotFoundException('Binding '.$offset.' not found.');
         }
 
@@ -543,4 +548,3 @@ class Container implements ContainerInterface
         unset($this->bindings[$offset]);
     }
 }
-

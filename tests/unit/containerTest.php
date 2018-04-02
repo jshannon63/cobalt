@@ -98,7 +98,7 @@ class Yaz
 {
     public function sayHello()
     {
-        return "Hello";
+        return 'Hello';
     }
 }
 
@@ -190,7 +190,8 @@ class containerTest extends TestCase
         $this->assertTrue($app->has('Tests\Fiz'));
     }
 
-    public function testBindingOfClassWithoutConstructor(){
+    public function testBindingOfClassWithoutConstructor()
+    {
         $app = new Container();
 
         $app->bind('Tests\Yaz');
@@ -199,7 +200,7 @@ class containerTest extends TestCase
 
         $yaz = $app['Tests\Yaz'];
 
-        $this->assertInstanceOf(Yaz::class,$yaz);
+        $this->assertInstanceOf(Yaz::class, $yaz);
     }
 
     // check dependency injection through closure
@@ -407,19 +408,18 @@ class containerTest extends TestCase
     {
         $app = new Container('cached');
 
-        $app->bind('Yib', function(){
-            return new Yib('I','am','variadic',new Yaz,function(){
-                return "Closure";
+        $app->bind('Yib', function () {
+            return new Yib('I', 'am', 'variadic', new Yaz, function () {
+                return 'Closure';
             });
         });
 
         $value = $app['Yib']();
-        $this->assertEquals(['I','am','variadic',new Yaz,function(){
-            return "closure";
+        $this->assertEquals(['I', 'am', 'variadic', new Yaz, function () {
+            return 'closure';
         }], $value);
         $this->assertEquals('Hello', $value[3]->sayHello());
         $this->assertEquals('Closure', $value[4]());
-
     }
 
     public function testDirectBindingOfObject()
@@ -439,29 +439,29 @@ class containerTest extends TestCase
         $timer['start'] = microtime(true);
 
         $app = new Container($mode);
-        $timer['create'] = microtime(true)-$timer['start'];
+        $timer['create'] = microtime(true) - $timer['start'];
 
         $app->bind(Foo::class);
-        $timer['bind'] = ((microtime(true)-$timer['start'])-$timer['create']);
+        $timer['bind'] = ((microtime(true) - $timer['start']) - $timer['create']);
 
         $foo = $app->resolve(Foo::class);
-        $timer['resolve'] = ((microtime(true)-$timer['start'])-$timer['bind']);
+        $timer['resolve'] = ((microtime(true) - $timer['start']) - $timer['bind']);
 
         $foo2 = $app->resolve(Foo::class);
-        $timer['resolve2'] = ((microtime(true)-$timer['start'])-$timer['resolve']);
+        $timer['resolve2'] = ((microtime(true) - $timer['start']) - $timer['resolve']);
 
         $foo3 = $app->resolve(Foo::class);
-        $timer['resolve3'] = ((microtime(true)-$timer['start'])-$timer['resolve2']);
+        $timer['resolve3'] = ((microtime(true) - $timer['start']) - $timer['resolve2']);
 
         $foo4 = $app->resolve(Foo::class);
-        $timer['resolve4'] = ((microtime(true)-$timer['start'])-$timer['resolve3']);
+        $timer['resolve4'] = ((microtime(true) - $timer['start']) - $timer['resolve3']);
 
-        for ($cnt = 0;$cnt < 100000;$cnt++) {
+        for ($cnt = 0; $cnt < 100000; $cnt++) {
             $fooX = $app->resolve(Foo::class);
         }
-        $timer['resolveX'] = ((microtime(true)-$timer['start'])-$timer['resolve4']);
+        $timer['resolveX'] = ((microtime(true) - $timer['start']) - $timer['resolve4']);
 
-        $timer['total'] = (microtime(true)-$timer['start']);
+        $timer['total'] = (microtime(true) - $timer['start']);
 
         unset($timer['start']);
 
@@ -469,14 +469,14 @@ class containerTest extends TestCase
             $timer[$key] = number_format(1e6 * $entry, 2);
         }
 
-        $timer['memory'] = ((memory_get_peak_usage()/1000)."Kbytes");
+        $timer['memory'] = ((memory_get_peak_usage() / 1000).'Kbytes');
 
-        if($mode == 'shared'){
+        if ($mode == 'shared') {
             $this->assertSame($foo->bar()->baz(), $foo2->bar()->baz());
             $this->assertSame($foo2->bar()->baz(), $foo3->bar()->baz());
             $this->assertSame($foo3->bar()->baz(), $foo4->bar()->baz());
             $this->assertSame($foo4->bar()->baz(), $fooX->bar()->baz());
-        } else{
+        } else {
             $this->assertNotSame($foo->bar()->baz(), $foo2->bar()->baz());
             $this->assertNotSame($foo2->bar()->baz(), $foo3->bar()->baz());
             $this->assertNotSame($foo3->bar()->baz(), $foo4->bar()->baz());
@@ -484,7 +484,8 @@ class containerTest extends TestCase
         }
     }
 
-    public function testDeprecatedMakeCommandStillWorks(){
+    public function testDeprecatedMakeCommandStillWorks()
+    {
         $app = new Container();
 
         $test = $app->make(Baz::class);
@@ -492,15 +493,14 @@ class containerTest extends TestCase
         $this->assertEquals('default words', $test->sayWords());
     }
 
-    public function testAliasCreation(){
+    public function testAliasCreation()
+    {
         $app = new Container();
 
         $test = $app->make(Baz::class);
 
-        $app->alias('aliased_test',Baz::class);
+        $app->alias('aliased_test', Baz::class);
 
         $this->assertEquals('default words', $app['aliased_test']->sayWords());
-
     }
 }
-
