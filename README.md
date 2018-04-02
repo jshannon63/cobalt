@@ -3,7 +3,7 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 
-# Cobalt - An Autowired Dependency Injection Container for PHP with Optional Dependency Caching
+# Cobalt - An Autowired Dependency Injection Container for PHP
   
   __Realized in fewer than 160 lines of source.__
   
@@ -11,29 +11,24 @@
    
   __100% PHPUnit test coverage__ 
     
-  __Among the fastest PHP autowired containers available__
+  __One of the fastest PHP dynamic autowired containers available__
   
 See [kocsismate/php-di-container-benchmarks](https://github.com/kocsismate/php-di-container-benchmarks) test results [here](https://rawgit.com/kocsismate/php-di-container-benchmarks/master/var/benchmark.html)
 
-Cobalt was created to push the performance limits on what a PHP dynamic autowired DI/IoC application container can achieve. The Container::class implements the PSR-11 ContainerInterface and provides many of the features found in more notable container projects. Additionally, dependency caching capabilities make the Cobalt container a great choice for performance intensive applications. Cobalt and its simplistic code are perfect for learning or for use within projects or frameworks.
+Cobalt was created to push the performance limits on what a PHP based dynamic autowired DI container can achieve. The Container::class implements the PSR-11 ContainerInterface and provides many of the features found in more notable container projects. Additionally, dependency caching capabilities make the Cobalt container a great choice for performance intensive applications. Cobalt and its simplistic code are perfect for learning or for use within projects or frameworks.
 
 The Cobalt service container has the following features:  
 
 1. Single class container implementing the PSR-11 ContainerInterface.
-2. Allows for ArrayAccess on container bindings.
-3. Automatic constructor injection of type-hinted dependencies.
-4. Dependency injection through a bind method Closure.
+2. ArrayAccess methods for container bindings.
+3. Constructor injection of type-hinted dependencies.
+4. Dependency injection through bind method closures.
 5. Autowired dependency resolution using Reflection.
 6. Top down inversion of control (IoC).
-7. Shared instances (singletons).
-8. Abstract class bound to a concrete implementation simplifies code.
-9. Bind existing instances into the container.
-10. A self-binding global container instance.
-11. Optional dependency caching for blazing fast speed.
-12. Optional shared only (singleton) mode.
-13. Exhaustive source code documentation.
+7. Shared mode option (singleton only).
+8. Bind existing instances into the container.
+9. A self-binding global container instance.
 
-Apology: I realize there are entirely too many source comments. These are meant for new developers who might appreciate them. They will most certainly help anyone looking to fully understand the inner workings of a modern service container.
 
 ## Installation
 ```
@@ -55,13 +50,13 @@ $app = new Container();
   
 $app = new Container('shared');
     
-// or, enable dependency caching for improved performance
-  
-$app = new Container('cached');
 ```
 
 ### Binding into the container
 Binding does not instantiate the class. Instantiation is deferred until requested from the container. The bind method accepts 3 parameters... the abstract name, the concrete implementation name and a true or false for defining as a singleton. Notice in all three versions we use different abstract names. This is to show that the abstract name is free-form and is used as the "key" for array storage of bindings.
+
+**bind($abstract, $concrete=null, $singleton=false)**
+
 
 **bind($abstract, $concrete=null, $singleton=false)**
 
@@ -94,28 +89,36 @@ $foo = $app->resolve('myfoo');
   
 // or
   
-$foo = $app->make('FooInterface');
-  
-// or
-  
 $foo = $app['FooInterface']; 
   
 // or
   
 $foo = $app->get('Foo');
-  
-// or if using make and Foo is not yet bound to the container you must supply a valid class name
-  
-$foo = $app->make('Foo::class');
 
 ```
 Note: resolve() and get() will throw an exception if the requested binding does not exist.
+
+### Using the `make()` method
+The make method will `bind()` then `resolve()` to return a fully instantiated binding. 
+
+**$instance = make($abstract, $concrete, $singleton=false)**
+```php
+$foo = make(FooInterface::class, Foo());
+```
+### Creating an alias to a binding
+**alias($alias, $binding)**
+
+Allows creating additional $id string keys for accessing existing container bindings.
+
+```php
+alias('myfoo', FooInterface::class);
+```
 ### Binding an existing instance
 **$instance = instance($abstract, $instance)**
 ```php
 $instance = $app->instance('Foo', new Foo);
-
 ```  
+Note: The `instance` method is deprecated but retained for backward compatibility. Instead, use `bind($id, $instance)` to register an existing intance.
 
 ### Checking if a binding exists
 **$bool = has($abstract)**
@@ -137,4 +140,5 @@ $array = $app->getBinding($abstract);
 $array = $app->getBindings();
 
 ```  
+
 

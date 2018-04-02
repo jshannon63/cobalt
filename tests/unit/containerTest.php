@@ -429,7 +429,7 @@ class containerTest extends TestCase
         $app->bind('Baz', new Baz('Peace on Earth'));
 
         $this->assertEquals('Peace on Earth', $app['Baz']->sayWords());
-        $this->assertEquals(true, $app->getBinding('Baz')[$app::SINGLETON]);
+        $this->assertEquals(true, $app->getBinding('Baz')['singleton']);
     }
 
     public function testTimeToCreate()
@@ -456,7 +456,7 @@ class containerTest extends TestCase
         $foo4 = $app->resolve(Foo::class);
         $timer['resolve4'] = ((microtime(true)-$timer['start'])-$timer['resolve3']);
 
-        for($cnt=0;$cnt<100000;$cnt++){
+        for ($cnt = 0;$cnt < 100000;$cnt++) {
             $fooX = $app->resolve(Foo::class);
         }
         $timer['resolveX'] = ((microtime(true)-$timer['start'])-$timer['resolve4']);
@@ -465,8 +465,8 @@ class containerTest extends TestCase
 
         unset($timer['start']);
 
-        foreach($timer as $key=>$entry){
-            $timer[$key]=number_format(1e6*$entry,2);
+        foreach ($timer as $key => $entry) {
+            $timer[$key] = number_format(1e6 * $entry, 2);
         }
 
         $timer['memory'] = ((memory_get_peak_usage()/1000)."Kbytes");
@@ -491,4 +491,16 @@ class containerTest extends TestCase
 
         $this->assertEquals('default words', $test->sayWords());
     }
+
+    public function testAliasCreation(){
+        $app = new Container();
+
+        $test = $app->make(Baz::class);
+
+        $app->alias('aliased_test',Baz::class);
+
+        $this->assertEquals('default words', $app['aliased_test']->sayWords());
+
+    }
 }
+

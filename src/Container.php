@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+namespace Jshannon63\Cobalt;
+
+use Closure;
+use Exception;
+use ReflectionClass;
+
 /**
  * Cobalt Service Container.
  *
@@ -15,57 +21,63 @@ declare(strict_types=1);
  * to interface methodology and reusable object
  * oriented design.
  *
- * Author: Jim Shannon (@jshannon63)
- * https://jimshannon.me
+ * @author Jim Shannon (jim@hltky.com)
+ * @link https://jimshannon.me
  * Date: 9/19/17
  * License: MIT
  */
-
-namespace Jshannon63\Cobalt;
-
-use Closure;
-use Exception;
-use ArrayAccess;
-use ReflectionClass;
-use Psr\Container\ContainerInterface;
-
-class Container implements ContainerInterface, ArrayAccess
+class Container implements ContainerInterface
 {
-    const CONCRETE = 0;
-    const SINGLETON = 2;
-    const REFLECTION = 4;
-    const DEPENDENCIES = 6;
-    const VALUE = 8;
-    const CLASSNAME = 9;
-    const TYPE = 10;
-    const DEFAULT = 11;
-
-    // this.
+    /**
+     * Global container instance
+     * @var Container
+     */
     protected static $container;
 
-    // Binding ID
-    protected $bid = 0;
-
-    // The only mode option is 'shared'. invalid options are ignored.
-    protected $mode;
-
-    // Array of container binding instructions.
-    protected $bindings = [];
-
-    // Array of cached prototype closures.
-    public $cache = [];
+    /**
+     * Binding ID
+     * @var int
+     */
+    protected $bindingId = 0;
 
     /**
-     * Service Container constructor. Set global static container. Register first
-     * binding of the container instance itself. Allow the service container
-     * to resolve itself. also register a base binding representing the
-     * container.
+     * For now, the only mode option is 'shared'. invalid options are ignored.
+     * @var null|string
+     */
+    protected $mode;
+
+    /**
+     * Array registry of container bindings.
+     *
+     * @var array
+     */
+    protected $bindings = [];
+
+    /**
+     * Array of cached prototype closures.
+     *
+     * @var array
+     */
+    protected $cache = [];
+
+    /**
+     * Array of aliased cached bindings keyed by alias
+     *
+     * @var array
+     */
+    protected $aliases = [];
+
+    /**
+     * Class constructor.
+     *
+     * @param  string $mode
+     * @throws ContainerException
      */
     public function __construct($mode = null)
     {
         $this->mode = $mode;
         static::$container = $this;
-        $this->instance(self::class, $this);
+        $this->bind(self::class, $this);
     }
 
     /**
@@ -78,13 +90,13 @@ class Container implements ContainerInterface, ArrayAccess
      * throughout your code and easy swap-out of
      * concrete implementations.
      *
-     * @param  string  $abstract
-     * @param  mixed  $concrete
-     * @param  bool  $singleton
+     * @param  string $abstract
+     * @param  mixed $concrete
+     * @param  bool $singleton
      * @return  void
      * @throws ContainerException
      */
-    public function bind(string $abstract, $concrete = null, bool $singleton = false): void
+    public function bind($abstract, $concrete = null, $singleton = false): void
     {
         // Start fresh... if this is a rebound, remove the binding.
         $this->destroyBinding($abstract);
@@ -96,23 +108,23 @@ class Container implements ContainerInterface, ArrayAccess
         // Initialize the binding array elements. Set $concrete to $abstract if not
         // provided. If the container was initialized in shared mode, then force
         // singletons.
-        $binding[self::CONCRETE] = (is_null($concrete)) ? $abstract : $concrete;
-        $binding[self::SINGLETON] = ($this->mode == 'shared') ? true : $singleton;
+        $binding['concrete'] = (is_null($concrete)) ? $abstract : $concrete;
+        $binding['singleton'] = ($this->mode == 'shared') ? true : $singleton;
 
         // If the concrete class is not a closure, then check if concrete is an object.
         // If so, set instance and singleton mode, then use reflection on the class,
         // cache it in the binding and set the full concrete name.
-        if (!$binding[self::CONCRETE] instanceof Closure) {
-            if (is_object($binding[self::CONCRETE])) {
-                $binding[self::SINGLETON] = true;
-                $this->prepareBindingClosure($abstract, $binding[self::CONCRETE]);
+        if (!$binding['concrete'] instanceof Closure) {
+            if (is_object($binding['concrete'])) {
+                $binding['singleton'] = true;
+                $this->prepareBindingClosure($abstract, $binding['concrete']);
             } else {
                 try {
-                    $binding[self::REFLECTION] = (new ReflectionClass($binding[self::CONCRETE]));
-                    $binding[self::CONCRETE] = $binding[self::REFLECTION]->getName();
+                    $binding['reflector'] = (new ReflectionClass($binding['concrete']));
+                    $binding['concrete'] = $binding['reflector']->getName();
                     $this->processDependencies($binding);
-                } catch (Exception $e){
-                    throw new ContainerException($binding[self::CONCRETE].' does not appear to be a valid class.');
+                } catch (Exception $e) {
+                    throw new ContainerException($binding['concrete'].' does not appear to be a valid class.');
                 }
             }
         }
@@ -123,11 +135,12 @@ class Container implements ContainerInterface, ArrayAccess
      * then calling make() to provide an instance out of the container.
      * Resolve should only be called if you know the binding exists.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return object
      * @throws NotFoundException
+     * @throws ContainerException
      */
-    public function resolve(string $id)
+    public function resolve($id)
     {
         // make sure the binding exists
         if (!isset($this->bindings[$id])) {
@@ -145,13 +158,16 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * Deprecated: Hold for backward compatibility.
+     * Bind and then resolve to return an instantiated binding.
      *
      * @param  $id
      * @param  $args
      * @return object
+     * @throws NotFoundException
+     * @throws ContainerException
      */
-    public function make($id, ...$args){
+    public function make($id, ...$args)
+    {
         $this->bind($id, ...$args);
         return $this->resolve($id);
     }
@@ -161,10 +177,11 @@ class Container implements ContainerInterface, ArrayAccess
      * then create it first. This allows calling of make() directly without
      * first binding() in case one needs a quick instance of a class.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return object
+     * @throws ContainerException
      */
-    private function create(string $id)
+    private function create($id)
     {
         // Check if the binding already exists. Forces a bind
         // whenever create is called internally.
@@ -183,106 +200,25 @@ class Container implements ContainerInterface, ArrayAccess
         // If the concrete implementation is a closure or class without a
         // constructor, then we have all the information we need so we
         // can build the blueprint and return it.
-        if ($binding[self::CONCRETE] instanceof Closure || $binding[self::DEPENDENCIES] == []) {
-            return $this->prepareBindingClosure($id, $binding[self::CONCRETE]);
+        if ($binding['concrete'] instanceof Closure || $binding['dependencies'] == []) {
+            return $this->prepareBindingClosure($id, $binding['concrete']);
         }
 
         // Now we can recursively dive through all the dependencies... for as deep
         // as they run in the graph. We will make new every dependency based on
         // the dependency information saved earlier.
-        foreach ($binding[self::DEPENDENCIES] as $type => $dependency) {
-            if ($dependency[self::TYPE] == self::CLASSNAME) {
-                $dependencies[] = $this->create($dependency[self::VALUE]);
-            } elseif ($dependency[self::TYPE] == self::DEFAULT) {
-                $dependencies[] = $dependency[self::VALUE];
+        foreach ($binding['dependencies'] as $type => $dependency) {
+            if ($dependency['type'] == 'class') {
+                $dependencies[] = $this->create($dependency['value']);
+            } elseif ($dependency['type'] == 'default') {
+                $dependencies[] = $dependency['value'];
             }
         }
 
         // We've reached the bottom on the dependency chain for this binding and
         // all it's dependencies are hydrated. We return a closure blueprint
         // for the class with all it's dependencies resolved.
-        return $this->prepareBindingClosure($id, $binding[self::REFLECTION],$dependencies);
-
-    }
-
-    /**
-     * Make a binding closure method to store in the cache,
-     *
-     * @param  string $id
-     * @param  mixed $blueprint
-     * @param  array $dependencies
-     * @return Closure
-     */
-    private function prepareBindingClosure($id, $blueprint, $dependencies = null)
-    {
-        if ($this->bindings[$id][self::SINGLETON]) {
-            return $this->prepareSingletonBindingClosure($id, $blueprint, $dependencies);
-        }
-        return $this->preparePrototypeBindingClosure($id, $blueprint, $dependencies);
-    }
-
-    /**
-     * Make a prototype binding closure method to store in the cache,
-     *
-     * @param  string $id
-     * @param  mixed $blueprint
-     * @param  array $dependencies
-     * @return Closure
-     */
-    private function preparePrototypeBindingClosure($id, $blueprint, $dependencies)
-    {
-        if($blueprint instanceof Closure) {
-            return $this->cache[$id] = function () use ($blueprint) {
-                return $blueprint();
-            };
-        }
-        if($blueprint instanceof ReflectionClass){
-            return $this->cache[$id] = function () use ($blueprint, $dependencies) {
-                foreach ($dependencies as $key => $dependency){
-                    if($dependency instanceof Closure){
-                        $dependencies[$key] = $dependency();
-                    }
-                }
-                return $blueprint->newInstanceArgs($dependencies);
-            };
-        }
-        return $this->cache[$id] = function () use ($blueprint) {
-            return new $blueprint;
-        };
-    }
-
-    /**
-     * Make a singleton binding closure method to store in the cache,
-     *
-     * @param  string $id
-     * @param  mixed $blueprint
-     * @param  array $dependencies
-     * @return Closure
-     */
-    private function prepareSingletonBindingClosure($id, $blueprint, $dependencies)
-    {
-        $binding = $this->bindings[$id];
-        $instance = $blueprint;
-
-        if($blueprint instanceof Closure) {
-            $instance = $blueprint();
-        }
-        if(is_string($blueprint)){
-            $instance = new $blueprint;
-        }
-        if($blueprint instanceof ReflectionClass){
-            foreach ($dependencies as $key => $dependency){
-                if($dependency instanceof Closure){
-                    $dependencies[$key] = $dependency();
-                }
-            }
-            $instance = $blueprint->newInstanceArgs($dependencies);
-        }
-        unset($binding[self::DEPENDENCIES]);
-        unset($binding[self::REFLECTION]);
-        return $this->cache[$id] = function() use ($instance){
-            return $instance;
-        };
+        return $this->prepareBindingClosure($id, $binding['reflector'], $dependencies);
     }
 
     /**
@@ -290,44 +226,38 @@ class Container implements ContainerInterface, ArrayAccess
      * the dependencies, but store the data to the binding registry for
      * later use.
      *
-     * @param  array  $binding
+     * @param  array $binding
      * @return void
      * @throws ContainerException
      */
     private function processDependencies(&$binding): void
     {
-        // Let's retrieve the ReflectionClass object previously generated
-        // during binding. Store it to a $class variable for ease of
-        // reading.
-        $class = $binding[self::REFLECTION];
-
+        // Let's use the ReflectionClass object previously generated during binding.
         // If it's not instantiable, then we can do nothing... throw exception.
-        if (!$class->isInstantiable()) {
-            throw new ContainerException($binding[self::CONCRETE].' can not be instantiated.');
+        if (!$binding['reflector']->isInstantiable()) {
+            throw new ContainerException($binding['concrete'].' can not be instantiated.');
         }
 
-        // Get the class constructor and see what we have.
-        $constructor = $class->getConstructor();
-
-        // If there is no constructor, return an empty array of dependencies
-        if (!$constructor) {
-            $binding[self::DEPENDENCIES] = [];
+        // Get the class constructor and see what we have. If there is no constructor,
+        // then return an empty array of dependencies.
+        if (!$constructor = $binding['reflector']->getConstructor()) {
+            $binding['dependencies'] = [];
             return;
         }
 
-        $binding[self::DEPENDENCIES] = $this->getParameters($constructor->getParameters());
-
+        // Otherwise get the constructor parameters and resolve them.
+        $binding['dependencies'] = $this->resolveParameters($constructor->getParameters());
     }
 
     /**
-     * Process the constructor parameter list that was obtained
-     * from ReflectionClass and return the dependencies.
+     * Process the constructor parameter list that was obtained from
+     * the ReflectionClass and return the resolved dependencies.
      *
-     * @param  array  $parameters
+     * @param  array $parameters
      * @return array
      * @throws ContainerException
      */
-    private function getParameters($parameters): array
+    private function resolveParameters($parameters): array
     {
         // this will hold our dependencies information
         $dependencies = [];
@@ -341,8 +271,8 @@ class Container implements ContainerInterface, ArrayAccess
             // given a default value. If so, store the value for now.
             if (is_null($dependency)) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[$key][self::TYPE] = self::DEFAULT;
-                    $dependencies[$key][self::VALUE] = $parameter->getDefaultValue();
+                    $dependencies[$key]['type'] = 'default';
+                    $dependencies[$key]['value'] = $parameter->getDefaultValue();
                 } else {
                     throw new ContainerException('Non class dependency ('.$parameter->name.') requires default value.');
                 }
@@ -350,49 +280,145 @@ class Container implements ContainerInterface, ArrayAccess
             // Otherwise, it's a class dependency. We will store the class name
             // so that we can create it later.
             else {
-                $dependencies[$key][self::TYPE] = self::CLASSNAME;
-                $dependencies[$key][self::VALUE] = $dependency->name;
+                $dependencies[$key]['type'] = 'class';
+                $dependencies[$key]['value'] = $dependency->name;
             }
         }
         return $dependencies;
     }
 
     /**
-     * Register an existing instance into the container.
-     * Instance will be treated as a singleton.
+     * Make a binding closure method to store in the cache.
      *
-     * @param  string  $abstract
-     * @param  object  $instance
-     * @return object
+     * @param  string $id
+     * @param  mixed $blueprint
+     * @param  array $dependencies
+     * @return Closure
      */
-    public function instance(string $abstract, $instance)
+    private function prepareBindingClosure($id, $blueprint, $dependencies = null): Closure
     {
-        // bind the key and instance to the container and mark as singleton.
-        $this->bind($abstract, $instance, true);
+        if ($this->bindings[$id]['singleton']) {
+            return $this->prepareSingletonBindingClosure($id, $blueprint, $dependencies);
+        }
+        return $this->preparePrototypeBindingClosure($id, $blueprint, $dependencies);
+    }
+
+    /**
+     * Make a prototype binding closure method to store in the cache.
+     *
+     * @param  string $id
+     * @param  mixed $blueprint
+     * @param  array $dependencies
+     * @return Closure
+     */
+    private function preparePrototypeBindingClosure($id, $blueprint, $dependencies): Closure
+    {
+        if ($blueprint instanceof ReflectionClass) {
+            return $this->cache[$id] = function () use ($blueprint, $dependencies) {
+                foreach ($dependencies as $key => $dependency) {
+                    if ($dependency instanceof Closure) {
+                        $dependencies[$key] = $dependency();
+                    }
+                }
+                return $blueprint->newInstanceArgs($dependencies);
+            };
+        }
+        if ($blueprint instanceof Closure) {
+            return $this->cache[$id] = $blueprint;
+        }
+        return $this->cache[$id] = function () use ($blueprint) {
+            return new $blueprint;
+        };
+    }
+
+    /**
+     * Make a singleton binding closure method to store in the cache.
+     *
+     * @param  string $id
+     * @param  mixed $blueprint
+     * @param  array $dependencies
+     * @return Closure
+     */
+    private function prepareSingletonBindingClosure($id, $blueprint, $dependencies): Closure
+    {
+        $binding = $this->bindings[$id];
+        $instance = $blueprint;
+
+        if ($blueprint instanceof ReflectionClass) {
+            foreach ($dependencies as $key => $dependency) {
+                if ($dependency instanceof Closure) {
+                    $dependencies[$key] = $dependency();
+                }
+            }
+            $instance = $blueprint->newInstanceArgs($dependencies);
+        }
+        if ($blueprint instanceof Closure) {
+            $instance = $blueprint();
+        }
+        // If blueprint is supplied as a class name.
+        if (is_string($blueprint)) {
+            $instance = new $blueprint;
+        }
+        // Singletons won't need these any longer so free up the memory.
+        unset($binding['dependencies'], $binding['reflector']);
+
+        return $this->cache[$id] = function () use ($instance) {
+            return $instance;
+        };
+    }
+
+    /**
+     * Deprecated: Hold for backward compatibility.
+     *
+     * @param  string $abstract
+     * @param  object $instance
+     * @return object
+     * @throws ContainerException
+     */
+    public function instance($abstract, $instance)
+    {
+        // bind the key and instance to the container.
+        $this->bind($abstract, $instance);
 
         // then return the instance for posterity.
         return $this->cache[$abstract]();
     }
 
     /**
+     * Create an alias to an existing cached binding
+     *
+     * @param  string $alias
+     * @param  string $binding
+     * @throws NotFoundException
+     * @throws ContainerException
+     */
+    public function alias($alias, $binding)
+    {
+        if ($this->resolve($binding)) {
+            $this->bindings[$alias] = $this->bindings[$binding];
+            $this->cache[$alias] = $this->cache[$binding];
+            $this->aliases[$alias] = $binding;
+        }
+    }
+
+    /**
      * Create empty binding in the registry and set ID
      *
-     * @param  string  $id
+     * @param  string $id
      */
     private function initializeBinding($id)
     {
-        $this->bindings[$id]['ID'] = $this->bid++;
+        $this->bindings[$id]['ID'] = $this->bindingId++;
     }
 
     /**
      * Remove all traces of the specified binding
      *
-     * @param  string  $id
+     * @param  string $id
      */
     private function destroyBinding($id)
     {
-        unset($this->cache[$id]);
-        unset($this->bindings[$id]);
+        unset($this->cache[$id], $this->bindings[$id], $this->aliases[$id]);
     }
 
     /**
@@ -406,9 +432,9 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * Return and array containing a the requested binding.
+     * Return and array containing a the requested binding information.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return array
      */
     public function getBinding($id): array
@@ -435,8 +461,11 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ContainerInterface.
      * Get the binding with the given $id.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return object
+     * @throws NotFoundException
+     * @throws ContainerException
+     *
      */
     public function get($id)
     {
@@ -447,7 +476,7 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ContainerInterface.
      * Check if binding with $id exists.
      *
-     * @param  string  $id
+     * @param  string $id
      * @return bool
      */
     public function has($id): bool
@@ -463,7 +492,7 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ArrayAccess.
      * Checks if binding at $offset exists.
      *
-     * @param  string  $offset
+     * @param  string $offset
      * @return bool
      */
     public function offsetExists($offset): bool
@@ -475,9 +504,10 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ArrayAccess.
      * Returns instance identified by $offset binding.
      *
-     * @param  string  $offset
+     * @param  string $offset
      * @return object
      * @throws NotFoundException
+     * @throws ContainerException
      */
     public function offsetGet($offset)
     {
@@ -493,8 +523,9 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ArrayAccess.
      * Set binding at $offset (abstract) with $value (concrete).
      *
-     * @param  string  $offset
-     * @param  mixed  $value
+     * @param  string $offset
+     * @param  mixed $value
+     * @throws ContainerException
      */
     public function offsetSet($offset, $value): void
     {
@@ -505,10 +536,11 @@ class Container implements ContainerInterface, ArrayAccess
      * Interface method for ArrayAccess.
      * Remove the binding at $offset.
      *
-     * @param  string  $offset
+     * @param  string $offset
      */
     public function offsetUnset($offset): void
     {
         unset($this->bindings[$offset]);
     }
 }
+
