@@ -79,8 +79,8 @@ class Container implements CobaltContainerInterface
         $this->mode = $mode;
         static::$container = $this;
         $this->bind(self::class, $this);
-        $this->alias(ContainerInterface::class, $this);
-        $this->alias(CobaltContainerInterface::class, $this);
+        $this->alias(ContainerInterface::class, self::class);
+        $this->alias(CobaltContainerInterface::class, self::class);
     }
 
     /**
@@ -187,6 +187,9 @@ class Container implements CobaltContainerInterface
      */
     private function create($id)
     {
+        /* @var null|array */
+        $dependencies = [];
+
         // Check if the binding already exists. Forces a bind
         // whenever create is called internally.
         if (! isset($this->bindings[$id])) {
@@ -244,14 +247,14 @@ class Container implements CobaltContainerInterface
 
         // Get the class constructor and see what we have. If there is no constructor,
         // then return an empty array of dependencies.
-        if (! $constructor = $binding['reflector']->getConstructor()) {
+        if (! $binding['reflector']->getConstructor()) {
             $binding['dependencies'] = [];
 
             return;
         }
 
         // Otherwise get the constructor parameters and resolve them.
-        $binding['dependencies'] = $this->resolveParameters($constructor->getParameters());
+        $binding['dependencies'] = $this->resolveParameters($binding['reflector']->getConstructor()->getParameters());
     }
 
     /**
