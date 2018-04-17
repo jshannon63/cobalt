@@ -15,7 +15,7 @@ use Psr\Container\ContainerInterface as PsrContainerInterface;
  * Date: 9/19/17
  * License: MIT
  */
-interface ContainerInterface extends PsrContainerInterface, ArrayAccess
+interface CobaltContainerInterface extends PsrContainerInterface, ArrayAccess
 {
     /**
      * Bind a class into the container.

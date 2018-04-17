@@ -57,9 +57,6 @@ Binding does not instantiate the class. Instantiation is deferred until requeste
 
 **bind($abstract, $concrete=null, $singleton=false)**
 
-
-**bind($abstract, $concrete=null, $singleton=false)**
-
 ```php
 // a simple binding using only the class name
   
@@ -68,7 +65,7 @@ $app->bind(Foo::class);
 // or, bind an interface with a desired concrete implementation.
 // can be switched out easily on one place in your code.
   
-$app->bind('FooInterface', 'Foo');
+$app->bind('FooInterface', Foo::class);
   
 // or, bind an interface or other label to a closure to
 // directly control dependency injection.
@@ -79,24 +76,23 @@ $app->bind('FooInterface', function(){
   
 // or, use array access to bind a new instance directly.
   
-$app['Foo'] = new Foo;
+$app['Foo'] = new Foo();
 ```
 ### Resolving out of the container
 **$instance = resolve($abstract);**  (resolve checks for existing binding before instantiating)  
-**$instance = make($abstract);**  (make will bind and instantiate the class if not already)
 ```php
-$foo = $app->resolve('myfoo');
+$foo = $app->resolve(FooInterface::class);
   
 // or
   
-$foo = $app['FooInterface']; 
+$foo = $app[FooInterface::class]; 
   
 // or
   
-$foo = $app->get('Foo');
+$foo = $app->get(FooInterface::class);
 
 ```
-Note: resolve() and get() will throw an exception if the requested binding does not exist.
+Note: Trying to resolve will throw an exception if the requested binding does not exist.
 
 ### Using the `make()` method
 The make method will `bind()` then `resolve()` to return a fully instantiated binding. 
@@ -128,14 +124,14 @@ $bool = $app->has('Foo');
 ```  
 
 ### Get the values of a single binding
-**$array = getBinding($abstract)**  // returns an array of the desired bindings' values
+**$array = getBinding($abstract)** 
 ```php
 $array = $app->getBinding($abstract);
 
 ```  
 
 ### Getting a list of bindings
-**$array = getBindings()**  // returns an array of the abstract name string keys
+**$array = getBindings()** 
 ```php
 $array = $app->getBindings();
 

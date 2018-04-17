@@ -26,7 +26,7 @@ use ReflectionClass;
  * Date: 9/19/17
  * License: MIT
  */
-class Container implements ContainerInterface
+class Container implements CobaltContainerInterface
 {
     /**
      * Global container instance.
