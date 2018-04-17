@@ -6,6 +6,7 @@ namespace Jshannon63\Cobalt;
 
 use Closure;
 use Exception;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 
 /**
@@ -68,16 +69,18 @@ class Container implements CobaltContainerInterface
     protected $aliases = [];
 
     /**
-     * Class constructor.
-     *
-     * @param  string $mode
+     * Container constructor.
+     * @param null $mode
      * @throws ContainerException
+     * @throws NotFoundException
      */
     public function __construct($mode = null)
     {
         $this->mode = $mode;
         static::$container = $this;
         $this->bind(self::class, $this);
+        $this->alias(ContainerInterface::class, $this);
+        $this->alias(CobaltContainerInterface::class, $this);
     }
 
     /**
