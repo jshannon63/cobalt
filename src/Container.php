@@ -6,8 +6,8 @@ namespace Jshannon63\Cobalt;
 
 use Closure;
 use Exception;
-use Psr\Container\ContainerInterface;
 use ReflectionClass;
+use Psr\Container\ContainerInterface;
 
 /**
  * Cobalt Service Container.
