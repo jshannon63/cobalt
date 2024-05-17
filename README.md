@@ -13,8 +13,6 @@
     
   __One of the fastest PHP dynamic autowired containers available__
   
-See [kocsismate/php-di-container-benchmarks](https://github.com/kocsismate/php-di-container-benchmarks) test results [here](https://rawgit.com/kocsismate/php-di-container-benchmarks/master/var/benchmark.html)
-
 Cobalt was created to push the performance limits on what a PHP based dynamic autowired DI container can achieve. The Container::class implements the PSR-11 ContainerInterface and provides many of the features found in more notable container projects. Additionally, dependency caching capabilities make the Cobalt container a great choice for performance intensive applications. Cobalt and its simplistic code are perfect for learning or for use within projects or frameworks.
 
 The Cobalt service container has the following features:  
