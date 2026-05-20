@@ -4,7 +4,3 @@ parameters:
         - src
         - tests
     treatPhpDocTypesAsCertain: false
-    ignoreErrors:
-        # Test fixtures use reflection to reset private static container state.
-        - identifier: classConstant.deprecated
-          path: tests/Unit/ContainerTest.php
