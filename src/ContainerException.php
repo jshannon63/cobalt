@@ -5,6 +5,8 @@ declare(strict_types=1);
 /**
  * Author: Jim Shannon (@jshannon63)
  *
+ * @link    mailto:jim@hltky.com
+ *
  * License: MIT
  */
 

@@ -27,6 +27,8 @@ use ReflectionUnionType;
  *
  * @author  Jim Shannon (jim@hltky.com)
  *
+ * @link    mailto:jim@hltky.com
+ *
  * License: MIT
  *
  * @phpstan-type DependencyRecord array{type: 'class'|'default', value: mixed, default?: mixed}
