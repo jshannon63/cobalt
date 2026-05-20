@@ -16,8 +16,6 @@ use Psr\Container\ContainerInterface as PsrContainerInterface;
  *
  * @author Jim Shannon (jim@hltky.com)
  *
- * @link   https://jimshannon.me
- *
  * License: MIT
  *
  * @extends ArrayAccess<string, mixed>

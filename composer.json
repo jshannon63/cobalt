@@ -16,8 +16,7 @@
     "authors": [
         {
             "name": "Jim Shannon",
-            "email": "jim@hltky.com",
-            "homepage": "https://jimshannon.me/"
+            "email": "jim@hltky.com"
         }
     ],
     "require": {
