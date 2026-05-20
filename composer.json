@@ -27,7 +27,7 @@
     "require-dev": {
         "laravel/pint": "^1.18",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^11.4"
+        "phpunit/phpunit": "^11.5.50"
     },
     "autoload": {
         "psr-4": {
