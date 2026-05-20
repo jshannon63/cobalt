@@ -1,40 +1,62 @@
 {
-  "name": "jshannon63/cobalt",
-  "type": "library",
-  "description": "Autowired Dependency Injection Container for PHP with Dependency Caching",
-  "keywords": [
-    "dependency-injection-container",
-    "ico-container",
-    "ioc",
-    "container",
-    "php",
-    "service-container",
-    "application-framework",
-    "psr-11",
-    "autowire",
-    "interop",
-    "di"
-  ],
-  "homepage": "https://github.com/jshannon63/container",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Jim Shannon",
-      "email": "jim@hltky.com",
-      "homepage": "https://jimshannon.me/"
-    }
-  ],
-  "require": {
-    "php": "^7.1",
-    "psr/container": "^1.0"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "~7.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Jshannon63\\Cobalt\\": "src/"
-    }
-  },
-  "minimum-stability": "dev"
+    "name": "jshannon63/cobalt",
+    "type": "library",
+    "description": "A fast, autowired PSR-11 dependency injection container for PHP with cached resolution closures.",
+    "keywords": [
+        "container",
+        "dependency-injection",
+        "ioc",
+        "psr-11",
+        "service-container",
+        "autowire",
+        "di"
+    ],
+    "homepage": "https://github.com/jshannon63/cobalt",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jim Shannon",
+            "email": "jim@hltky.com",
+            "homepage": "https://jimshannon.me/"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "psr/container": "^2.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.18",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5.50"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jshannon63\\Cobalt\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jshannon63\\Cobalt\\Tests\\": "tests/"
+        }
+    },
+    "provide": {
+        "psr/container-implementation": "2.0"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-clover coverage.xml --coverage-text",
+        "lint": "pint --test",
+        "lint:fix": "pint",
+        "analyse": "phpstan analyse",
+        "check": [
+            "@lint",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

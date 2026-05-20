@@ -10,151 +10,78 @@ use Psr\Container\ContainerInterface as PsrContainerInterface;
 /**
  * Cobalt Service Container Interface.
  *
+ * Extends PSR-11 with binding/aliasing operations and ArrayAccess so
+ * implementations behave as both a standards-compliant container
+ * and a familiar array-like registry of services.
+ *
  * @author Jim Shannon (jim@hltky.com)
- * @link https://jimshannon.me
- * Date: 9/19/17
+ *
+ * @link   https://jimshannon.me
+ *
  * License: MIT
+ *
+ * @extends ArrayAccess<string, mixed>
  */
 interface CobaltContainerInterface extends PsrContainerInterface, ArrayAccess
 {
     /**
      * Bind a class into the container.
      *
-     * @param  string $abstract
-     * @param  mixed $concrete
-     * @param  bool $singleton
-     * @return  void
+     * $concrete may be a class-string, a Closure, or an existing object
+     * instance. When $concrete is an object, the binding is forced to
+     * singleton (a pre-built instance is by definition shared).
+     *
      * @throws ContainerException
      */
-    public function bind($abstract, $concrete = null, $singleton = false);
+    public function bind(string $abstract, mixed $concrete = null, bool $singleton = false): void;
 
     /**
-     * Resolve binding.
+     * Resolve a binding out of the container. Should only be called when
+     * you expect the binding to exist; missing bindings raise
+     * NotFoundException per the PSR-11 contract.
      *
-     * @param  string $id
-     * @return object
      * @throws NotFoundException
      * @throws ContainerException
      */
-    public function resolve($id);
+    public function resolve(string $id): mixed;
 
     /**
-     * Bind and then resolve to return an instantiated binding.
+     * Bind and immediately resolve in a single call.
      *
-     * @param  $id
-     * @param  $args
-     * @return object
      * @throws NotFoundException
      * @throws ContainerException
      */
-    public function make($id, ...$args);
+    public function make(string $id, mixed ...$args): mixed;
 
     /**
-     * Deprecated: Hold for backward compatibility.
+     * Create an alias to an existing cached binding. After this call,
+     * `$container[$alias]` resolves to the same instance as the
+     * target binding.
      *
-     * @param  string $abstract
-     * @param  object $instance
-     * @return object
-     * @throws ContainerException
-     */
-    public function instance($abstract, $instance);
-
-    /**
-     * Create an alias to an existing cached binding.
-     *
-     * @param  string $alias
-     * @param  string $binding
      * @throws NotFoundException
      * @throws ContainerException
      */
-    public function alias($alias, $binding);
+    public function alias(string $alias, string $binding): void;
 
     /**
-     * Get the global instance of the container.
-     *
-     * @return Container
+     * Get the most recently constructed container instance. Useful for
+     * code that needs to reach the active container without having
+     * it injected.
      */
-    public static function getContainer();
+    public static function getContainer(): self;
 
     /**
-     * Return and array containing a the requested binding information.
+     * Return the internal record for a single binding. Useful for
+     * debugging and introspection.
      *
-     * @param  string $id
-     * @return array
+     * @return array<string, mixed>
      */
-    public function getBinding($id);
+    public function getBinding(string $id): array;
 
     /**
-     * Return and array containing all the bindings.
-     * Sometimes you are just curious.
+     * Return the entire binding registry. Sometimes you are just curious.
      *
-     * @return array
+     * @return array<string, array<string, mixed>>
      */
-    public function getBindings();
-
-    /********************************************
-     * ContainerInterface Methods
-     ********************************************/
-
-    /**
-     * Interface method for ContainerInterface.
-     * Get the binding with the given $id.
-     *
-     * @param  string $id
-     * @return object
-     * @throws NotFoundException
-     * @throws ContainerException
-     */
-    public function get($id);
-
-    /**
-     * Interface method for ContainerInterface.
-     * Check if binding with $id exists.
-     *
-     * @param  string $id
-     * @return bool
-     */
-    public function has($id);
-
-    /********************************************
-     * ArrayAccess Methods
-     ********************************************/
-
-    /**
-     * Interface method for ArrayAccess.
-     * Checks if binding at $offset exists.
-     *
-     * @param  string $offset
-     * @return bool
-     */
-    public function offsetExists($offset);
-
-    /**
-     * Interface method for ArrayAccess.
-     * Returns instance identified by $offset binding.
-     *
-     * @param  string $offset
-     * @return object
-     * @throws NotFoundException
-     * @throws ContainerException
-     */
-    public function offsetGet($offset);
-
-    /**
-     * Interface method for ArrayAccess.
-     * Set binding at $offset (abstract) with $value (concrete).
-     *
-     * @param  string $offset
-     * @param  mixed $value
-     * @throws ContainerException
-     */
-    public function offsetSet($offset, $value);
-
-    /**
-     * Interface method for ArrayAccess.
-     * Remove the binding at $offset.
-     *
-     * @param  string $offset
-     */
-    public function offsetUnset($offset);
+    public function getBindings(): array;
 }
